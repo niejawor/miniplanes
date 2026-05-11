@@ -64,13 +64,13 @@ public class Airport {
         return passengers.size() > type.passengerCapacity;
     }
 
-    private List<Airplane> getParkedAirplanes() {
+    public List<Airplane> getParkedAirplanes() {
         return parkedAirplanes.stream()
                 .map(entry -> entry.airplane)
                 .collect(Collectors.toList());
     }
 
-    private boolean canLand() {
+    public boolean canLand() {
         if (parkedAirplanes.size() + activeLandings >= type.capacity) return false;
         return activeLandings < type.landingRunways;
     }
@@ -80,6 +80,18 @@ public class Airport {
         activeLandings++;
         parkedAirplanes.add(new AirplaneEntry(airplane));
         activeLandings--; // Tutaj później dodamy wątek żeby za np. 1 sekundę kończył lądowanie
+    }
+
+    public void update(float deltaTime) {
+        tryStartAirplane();
+    }
+
+    public void unloadPassengers(Airplane airplane) {
+        // TODO
+    }
+
+    public void loadPassengers(Airplane airplane) {
+        // TODO
     }
 
     public void tryStartAirplane() {
