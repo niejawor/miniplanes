@@ -1,47 +1,44 @@
 package model;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Airport {
-    private static class AirplaneEntry {
-        Instant arrivalTime;
+    public static class AirplaneEntry {
+        int index;          // Terminal dla zaparkowanych, numer pasa startowego dla startujących i numer pasa lądowania dla lądujących
         Airplane airplane;
 
-        AirplaneEntry(Airplane airplane) {
+        public AirplaneEntry(Airplane airplane, int index) {
             this.airplane = airplane;
-            arrivalTime = Instant.now();
+            this.index = index;
         }
     };
 
     private final Shape shape;
-    private final Color color;
     private final float[] position;
     private final AirportType type;
 
-    private final ArrayList<AirplaneEntry> parkedAirplanes = new ArrayList<>();
-
-    private int activeTakeoffs = 0;
-    private int activeLandings = 0;
-
     private final List<Passenger> passengers = new ArrayList<>();
 
-    public Airport(Shape shape, Color color, float[] position, AirportType type) {
+    private final ArrayList<Airplane> queuedAirplanes = new ArrayList<>();
+
+    private final ArrayList<AirplaneEntry> parkedAirplanes = new ArrayList<>();
+    private final ArrayList<AirplaneEntry> landingAirplanes = new ArrayList<>();
+    private final ArrayList<AirplaneEntry> startingAirplanes = new ArrayList<>();
+
+    private int currentlyFreeTerminal = 0;
+    private int currentlyFreeLandingRunway = 0;
+    private int currentlyFreeStartingRunway = 0;
+
+    public Airport(Shape shape, float[] position, AirportType type) {
         this.shape = shape;
-        this.color = color;
         this.position = position;
         this.type = type;
     }
 
     public Shape getShape() {
         return shape;
-    }
-
-    public Color getColor() {
-        return color;
     }
 
     public AirportType getAirportType() {
@@ -56,52 +53,122 @@ public class Airport {
         return passengers;
     }
 
+    public List<AirplaneEntry> getParkedAirplanes() {
+        return parkedAirplanes;
+    }
+
+    public List<AirplaneEntry> getLandingAirplanes() {
+        return landingAirplanes;
+    }
+
+    public List<AirplaneEntry> getStartingAirplanes() {
+        return startingAirplanes;
+    }
+
+    public List<Airplane> getQueuedAirplanes() {
+        return queuedAirplanes;
+    }
+
     public void addPassenger(Passenger passenger) {
         passengers.add(passenger);
     }
 
-    public boolean isOverCrowded() {
+    private boolean isOverCrowded() {
         return passengers.size() > type.passengerCapacity;
     }
 
-    public List<Airplane> getParkedAirplanes() {
-        return parkedAirplanes.stream()
-                .map(entry -> entry.airplane)
-                .collect(Collectors.toList());
+    private float timeOverCrowded = 0;
+    private void updateOverCrowded(float deltaTime) {
+        if (isOverCrowded()) timeOverCrowded += deltaTime;
+        else timeOverCrowded = 0;
     }
 
-    public boolean canLand() {
-        if (parkedAirplanes.size() + activeLandings >= type.capacity) return false;
-        return activeLandings < type.landingRunways;
+    public float howLongOverCrowded() {
+        return timeOverCrowded;
     }
 
-    public void processLanding(Airplane airplane) {
-        if (!canLand()) return;
-        activeLandings++;
-        parkedAirplanes.add(new AirplaneEntry(airplane));
-        activeLandings--; // Tutaj później dodamy wątek żeby za np. 1 sekundę kończył lądowanie
+    private void unloadPassengersForAllPlanes() {
+        for (AirplaneEntry entry : parkedAirplanes) {
+            entry.airplane.unloadPassengers();
+        }
+    }
+
+    private void loadPassengersForAllPlanes() {
+        for (AirplaneEntry entry : parkedAirplanes) {
+            entry.airplane.loadPassengers();
+        }
     }
 
     public void update(float deltaTime) {
-        tryStartAirplane();
+        finishTakeOffs();
+        finishLandings();
+
+        unloadPassengersForAllPlanes();
+        loadPassengersForAllPlanes();
+
+        processNewTakeOffs();
+        processNewLandings();
+
+        updateOverCrowded(deltaTime);
     }
 
-    public void unloadPassengers(Airplane airplane) {
-        // TODO
+    public void finishTakeOffs() {
+        Iterator<AirplaneEntry> it = startingAirplanes.iterator();
+        AirplaneEntry entry;
+        while (it.hasNext()) {
+            if ((entry=it.next()).airplane.getTimeSpent() >= type.timeSpentTakingOff) {
+                entry.airplane.startNextJourney();
+                it.remove();
+            }
+        }
     }
 
-    public void loadPassengers(Airplane airplane) {
-        // TODO
+    public void finishLandings() {
+        Iterator<AirplaneEntry> it = landingAirplanes.iterator();
+        AirplaneEntry entry;
+        while (it.hasNext()) {
+            if ((entry=it.next()).airplane.getTimeSpent() >= type.timeSpentLanding) {
+                parkedAirplanes.add(new AirplaneEntry(entry.airplane, currentlyFreeTerminal));
+                entry.airplane.startDockingProcedure();
+                it.remove();
+            }
+        }
     }
 
-    public void tryStartAirplane() {
-        if (parkedAirplanes.isEmpty() || activeTakeoffs >= type.takeoffRunways) return;
-        AirplaneEntry entry = parkedAirplanes.get(0);
-        if (Duration.between(entry.arrivalTime, Instant.now()).getSeconds() < 5) return;
+    private boolean canLand() {
+        if (queuedAirplanes.isEmpty()) return false;
+        if (parkedAirplanes.size() + landingAirplanes.size() >= type.capacity) return false;
+        return landingAirplanes.size() < type.landingRunways;
+    }
 
-        activeTakeoffs++;
-        parkedAirplanes.remove(entry);
-        entry.airplane.startJourney();
-        activeTakeoffs--; // Tutaj później dodamy wątek żeby za np. 1 sekundę kończył star
+    public void airplaneReportsToLanding(Airplane airplane) {
+        queuedAirplanes.add(airplane);
+    }
+
+    public void processNewLandings() {
+        while (canLand()) {
+            Airplane a = queuedAirplanes.get(0);
+            queuedAirplanes.remove(0);
+            landingAirplanes.add(new AirplaneEntry(a, currentlyFreeLandingRunway));
+            currentlyFreeLandingRunway++;
+            currentlyFreeLandingRunway %= type.landingRunways;
+            a.startLandingProcedure();
+        }
+    }
+
+    public boolean canTakeOff() {
+        if (parkedAirplanes.isEmpty()) return false;
+        return startingAirplanes.size() < type.takeoffRunways;
+    }
+
+    public void processNewTakeOffs() {
+        while (canTakeOff()) {
+            Airplane a = parkedAirplanes.get(0).airplane;
+            parkedAirplanes.remove(0);
+            startingAirplanes.add(new AirplaneEntry(a, currentlyFreeStartingRunway));
+            currentlyFreeStartingRunway++;
+            currentlyFreeStartingRunway %= type.takeoffRunways;
+            a.startTakeOffProcedure();
+        }
     }
 }
