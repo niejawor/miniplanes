@@ -14,6 +14,11 @@ public final class Point {
         this.y = y;
     }
 
+    public Point(Point point) {
+        x = point.getX();
+        y = point.getY();
+    }
+
     public float distance(Point p){
         return (float)Math.sqrt((p.x - x)*(p.x - x) + (p.y - y)*(p.y - y));
     }

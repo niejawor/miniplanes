@@ -10,7 +10,7 @@ public class Airplane {
     private boolean flyingForward = true;
 
     private boolean currentlyFlying = false;
-    private float[] position = new float[2];
+    private Point position;
 
     AirplaneType type;
 
@@ -19,8 +19,7 @@ public class Airplane {
 
     Airplane(Line line, AirplaneType type) {
         this.line = line;
-        position[0] = line.get(0).getPosition()[0];
-        position[1] = line.get(0).getPosition()[1];
+        position = line.get(0).getPosition();
         this.type = type;
     }
 
@@ -62,22 +61,20 @@ public class Airplane {
 
     private void moveTowardsTarget(float deltaTime) {
         Airport target = line.get(idx);
-        float[] targetPos = target.getPosition();
+        Point targetPos = target.getPosition();
 
-        float dx = targetPos[0] - position[0];
-        float dy = targetPos[1] - position[1];
+        float dx = targetPos.getX() - position.getX();
+        float dy = targetPos.getY() - position.getY();
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
 
         float moveDist = type.speed * deltaTime;
 
         if (distance <= moveDist) {
-            position[0] = targetPos[0];
-            position[1] = targetPos[1];
+            position = targetPos;
             target.airplaneReportsToLanding(this);
             currentlyFlying = false;
         } else {
-            position[0] += (dx / distance) * moveDist;
-            position[1] += (dy / distance) * moveDist;
+            position.move((dx / distance) * moveDist, (dy / distance) * moveDist);
         }
     }
 
@@ -102,7 +99,7 @@ public class Airplane {
         return timeSpent;
     }
 
-    public float[] getPosition() {
+    public Point getPosition() {
         return position;
     }
 

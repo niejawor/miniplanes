@@ -16,7 +16,7 @@ public class Airport {
     };
 
     private final Shape shape;
-    private final float[] position;
+    private final Point position;
     private final AirportType type;
 
     private final List<Passenger> passengers = new ArrayList<>();
@@ -31,7 +31,7 @@ public class Airport {
     private int currentlyFreeLandingRunway = 0;
     private int currentlyFreeStartingRunway = 0;
 
-    public Airport(Shape shape, float[] position, AirportType type) {
+    public Airport(Shape shape, Point position, AirportType type) {
         this.shape = shape;
         this.position = position;
         this.type = type;
@@ -45,8 +45,8 @@ public class Airport {
         return type;
     }
 
-    public float[] getPosition() {
-        return position;
+    public Point getPosition() {
+        return new Point(position);
     }
 
     public List<Passenger> getPassengers() {
