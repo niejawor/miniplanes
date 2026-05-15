@@ -3,9 +3,6 @@ import java.util.function.*;
 import java.util.*;
 
 public final class Line {
-    public enum Color {
-        Red, Blue, Green
-    }
     private final static Supplier<Color> nextColorGetter = new EnumIterator<>(Color.class);
 
     private final LinkedList<Airport> path = new LinkedList<>();
@@ -16,6 +13,14 @@ public final class Line {
         color = nextColorGetter.get();
         path.add(a);
         path.add(b);
+    }
+
+    public int size() {
+        return path.size();
+    }
+
+    public Airport get(int idx) {
+        return path.get(idx);
     }
 
     public void addAirportBetween(Airport a, Airport b, Airport nowy) {
