@@ -1,5 +1,7 @@
 package model;
 
+import java.util.Random;
+
 public enum Shape {
     Circle,
     Triangle,
@@ -8,5 +10,12 @@ public enum Shape {
     Diamond,
     Cross,
     Pentagon,
-    Hexagon
+    Hexagon;
+
+    private static final Random RANDOM = new Random();
+
+    public static Shape getRandomShape() {
+        Shape[] shapes = values();
+        return shapes[RANDOM.nextInt(shapes.length)];
+    }
 }

@@ -1,19 +1,20 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class Airplane {
     ArrayList<Airport>path = new ArrayList<>();
     int idx = 0;
 
-    private boolean currentlyParked = true;
+    private boolean currentlyFlying = false;
     private float[] position = new float[2];
 
     AirplaneType type;
 
     private final List<Passenger> passengersOnBoard = new ArrayList<>();
-    private float timeSpentInAirport = 0;
+    private float timeSpent = 0;
 
     Airplane(ArrayList<Airport>path, AirplaneType type) {
         this.path = path;
@@ -22,18 +23,36 @@ public class Airplane {
         this.type = type;
     }
 
-    public void startJourney() {
-        currentlyParked = false;
-        idx++;
+    public List<Passenger> getPassengersOnBoard() {
+        return passengersOnBoard;
+    }
+
+    public void unloadPassengers() {
+        Iterator<Passenger> it = passengersOnBoard.iterator();
+        Passenger p;
+        while (it.hasNext()) {
+            if (!(p = it.next()).wantsToContinue(this)) {
+                path.get(idx).addPassenger(p);
+                it.remove();
+            }
+        }
+    }
+
+    public void loadPassengers() {
+        Iterator<Passenger> it = path.get(idx).getPassengers().iterator();
+        Passenger p;
+        while (it.hasNext() && passengersOnBoard.size() < type.capacity) {
+            if ((p = it.next()).wantsToBoard(this)) {
+                passengersOnBoard.add(p);
+                it.remove();
+            }
+        }
     }
 
     public void update(float deltaTime) {
-        if (currentlyParked) {
-            timeSpentInAirport += deltaTime;
-            return;
-        }
-
-        moveTowardsTarget(deltaTime);
+        timeSpent += deltaTime;
+        if (currentlyFlying)
+            moveTowardsTarget(deltaTime);
     }
 
     private void moveTowardsTarget(float deltaTime) {
@@ -49,24 +68,18 @@ public class Airplane {
         if (distance <= moveDist) {
             position[0] = targetPos[0];
             position[1] = targetPos[1];
-            tryLanding(target);
+            target.airplaneReportsToLanding(this);
+            currentlyFlying = false;
         } else {
             position[0] += (dx / distance) * moveDist;
             position[1] += (dy / distance) * moveDist;
         }
     }
 
-    private void tryLanding(Airport airport) {
-        if (airport.canLand()) {
-            airport.processLanding(this);
-            currentlyParked = true;
-            timeSpentInAirport = 0;
-
-            airport.unloadPassengers(this);
-            airport.loadPassengers(this);
-
-            prepareNextFlight();
-        }
+    public void startNextJourney() {
+        currentlyFlying = true;
+        timeSpent = 0;
+        prepareNextFlight();
     }
 
     private void prepareNextFlight() {
@@ -78,18 +91,27 @@ public class Airplane {
                 path.set(i, b);
                 path.set(path.size() - 1 - i, a);
             }
+            idx = 0;
         }
     }
 
-    public boolean isCurrentlyParked() {
-        return currentlyParked;
-    }
-
-    public float getTimeSpentInAirport() {
-        return timeSpentInAirport;
+    public float getTimeSpent() {
+        return timeSpent;
     }
 
     public float[] getPosition() {
         return position;
+    }
+
+    public void startTakeOffProcedure() {
+        timeSpent = 0;
+    }
+
+    public void startDockingProcedure() {
+        timeSpent = 0;
+    }
+
+    public void startLandingProcedure() {
+        timeSpent = 0;
     }
 }
