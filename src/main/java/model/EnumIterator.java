@@ -19,7 +19,7 @@ public final class EnumIterator<T extends Enum<T>> implements Supplier<T> {
             throw new IllegalArgumentException("Bezelementowy Enum");
     }
 
-    public T randomValue(){
+    public T getRandomValue(){
         return enumVals[intStream.nextInt(enumVals.length)];
     }
 
