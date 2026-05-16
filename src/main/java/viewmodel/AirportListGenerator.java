@@ -1,81 +1,106 @@
 package viewmodel;
 
-import model.Airport;
-import model.AirportType;
-import model.Point;
-import model.Shape;
+import model.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Założenie: Płótno mapy ma proporcje 16:9.
- * (0.0f, 0.0f) = Lewy Górny Róg
- * (1.0f, 1.0f) = Prawy Dolny Róg
- */
-
 public class AirportListGenerator {
-    public static List<Airport> generate50SmallAirports() {
+    public static List<Airport> generateAirports() {
         List<Airport> airports = new ArrayList<>();
+        EnumIterator<Shape> shapeHandler = new EnumIterator<>(Shape.class);
+        
+        /*
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.090f, 0.200f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.180f, 0.090f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.200f, 0.240f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.040f, 0.720f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.070f, 0.880f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.210f, 0.560f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.440f, 0.610f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.420f, 0.800f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.520f, 0.890f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.540f, 0.590f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.580f, 0.510f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.610f, 0.630f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.680f, 0.710f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.710f, 0.890f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.820f, 0.830f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.640f, 0.230f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.670f, 0.280f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.740f, 0.300f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.820f, 0.420f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.790f, 0.050f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.120f, 0.780f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.200f, 0.320f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.270f, 0.450f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.320f, 0.580f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.440f, 0.360f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.450f, 0.470f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.460f, 0.170f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.510f, 0.080f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.480f, 0.720f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.510f, 0.460f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.590f, 0.350f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.710f, 0.600f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.820f, 0.560f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.950f, 0.250f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.960f, 0.450f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.350f, 0.380f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.380f, 0.540f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.210f, 0.740f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.490f, 0.280f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.570f, 0.240f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.530f, 0.380f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.660f, 0.390f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.640f, 0.460f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.690f, 0.520f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.745f, 0.530f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.750f, 0.700f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.650f, 0.780f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.710f, 0.150f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.810f, 0.250f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.880f, 0.340f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.910f, 0.070f), AirportType.SmallAirport));
+        */
 
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.10f, 0.40f), AirportType.SmallAirport)); // Dublin, IE
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.22f, 0.45f), AirportType.SmallAirport)); // Londyn, UK
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.18f, 0.35f), AirportType.SmallAirport)); // Edynburg, UK
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.12f, 0.38f), AirportType.SmallAirport)); // Belfast, UK
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.20f, 0.42f), AirportType.SmallAirport)); // Manchester, UK
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.090f, 0.200f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.150f, 0.100f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.160f, 0.230f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.040f, 0.720f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.070f, 0.880f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.210f, 0.560f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.440f, 0.610f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.420f, 0.800f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.520f, 0.890f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.540f, 0.590f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.580f, 0.510f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.610f, 0.630f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.680f, 0.710f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.710f, 0.890f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.790f, 0.810f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.640f, 0.230f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.740f, 0.300f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.820f, 0.420f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.790f, 0.050f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.120f, 0.780f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.200f, 0.320f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.270f, 0.450f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.320f, 0.580f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.440f, 0.360f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.450f, 0.470f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.460f, 0.170f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.550f, 0.080f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.480f, 0.720f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.510f, 0.460f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.590f, 0.350f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.710f, 0.600f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.820f, 0.560f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.950f, 0.250f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.960f, 0.450f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.350f, 0.350f), AirportType.SmallAirport));
+        airports.add(new Airport(shapeHandler.getRandomValue(), new Point(0.210f, 0.770f), AirportType.SmallAirport));
 
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.22f, 0.73f), AirportType.SmallAirport)); // Madryt, ES
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.15f, 0.75f), AirportType.SmallAirport)); // Lizbona, PT
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.30f, 0.70f), AirportType.SmallAirport)); // Barcelona, ES
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.18f, 0.81f), AirportType.SmallAirport)); // Sewilla, ES
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.28f, 0.76f), AirportType.SmallAirport)); // Walencja, ES
-
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.55f, 0.23f), AirportType.SmallAirport)); // Sztokholm, SE
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.50f, 0.20f), AirportType.SmallAirport)); // Oslo, NO
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.48f, 0.30f), AirportType.SmallAirport)); // Kopenhaga, DK
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.62f, 0.18f), AirportType.SmallAirport)); // Helsinki, FI
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.05f, 0.10f), AirportType.SmallAirport)); // Reykjavik, IS
-
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.36f, 0.40f), AirportType.SmallAirport)); // Amsterdam, NL
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.35f, 0.44f), AirportType.SmallAirport)); // Bruksela, BE
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.48f, 0.40f), AirportType.SmallAirport)); // Berlin, DE
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.40f, 0.48f), AirportType.SmallAirport)); // Frankfurt, DE
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.44f, 0.52f), AirportType.SmallAirport)); // Monachium, DE
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.41f, 0.37f), AirportType.SmallAirport)); // Hamburg, DE
-
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.33f, 0.48f), AirportType.SmallAirport)); // Paryż, FR
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.36f, 0.68f), AirportType.SmallAirport)); // Marsylia, FR
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.34f, 0.58f), AirportType.SmallAirport)); // Lyon, FR
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.28f, 0.60f), AirportType.SmallAirport)); // Bordeaux, FR
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.38f, 0.70f), AirportType.SmallAirport)); // Nicea, FR
-
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.51f, 0.70f), AirportType.SmallAirport)); // Rzym, IT
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.47f, 0.60f), AirportType.SmallAirport)); // Mediolan, IT
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.52f, 0.78f), AirportType.SmallAirport)); // Neapol, IT
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.50f, 0.63f), AirportType.SmallAirport)); // Wenecja, IT
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.49f, 0.68f), AirportType.SmallAirport)); // Florencja, IT
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.50f, 0.83f), AirportType.SmallAirport)); // Palermo, IT (Sycylia)
-
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.58f, 0.42f), AirportType.SmallAirport)); // Warszawa, PL
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.50f, 0.48f), AirportType.SmallAirport)); // Praga, CZ
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.52f, 0.53f), AirportType.SmallAirport)); // Wiedeń, AT
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.55f, 0.55f), AirportType.SmallAirport)); // Budapeszt, HU
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.65f, 0.60f), AirportType.SmallAirport)); // Bukareszt, RO
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.62f, 0.65f), AirportType.SmallAirport)); // Sofia, BG
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.58f, 0.60f), AirportType.SmallAirport)); // Belgrad, RS
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.60f, 0.30f), AirportType.SmallAirport)); // Ryga, LV
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.60f, 0.25f), AirportType.SmallAirport)); // Tallinn, EE
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.63f, 0.35f), AirportType.SmallAirport)); // Wilno, LT
-
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.60f, 0.80f), AirportType.SmallAirport)); // Ateny, GR
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.73f, 0.71f), AirportType.SmallAirport)); // Stambuł, TR
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.80f, 0.78f), AirportType.SmallAirport)); // Ankara, TR
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.82f, 0.86f), AirportType.SmallAirport)); // Nikozja, CY
-
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.85f, 0.20f), AirportType.SmallAirport)); // Moskwa, RU
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.80f, 0.15f), AirportType.SmallAirport)); // Petersburg, RU
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.75f, 0.45f), AirportType.SmallAirport)); // Kijów, UA
-        airports.add(new Airport(Shape.getRandomShape(), new Point(0.70f, 0.38f), AirportType.SmallAirport)); // Mińsk, BY
 
         return airports;
     }
