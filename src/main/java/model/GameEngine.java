@@ -1,11 +1,14 @@
 package model;
 
+import viewmodel.AirportListGenerator;
+
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 
 // vm uruchomi sobie na jednym watku simulate i to bedzie sobie na spokojnie chodzic, inforamcje o wszytkim bedzie mogla poobierac od gameengine za pomoca odpowiedniego gettera
@@ -14,6 +17,7 @@ public class GameEngine {
     private final List<Airport> airports = new CopyOnWriteArrayList<>();
     private final List<Airplane> airplanes = new CopyOnWriteArrayList<>();
     private final List<Line> lines = new CopyOnWriteArrayList<>();
+    private final Supplier<Airport> airportSupplier = new AirportSupplier(AirportListGenerator.generateAirports(), null);
 
     private final Queue<Event> events = new ConcurrentLinkedQueue<>();
 
@@ -42,7 +46,7 @@ public class GameEngine {
     }
 
     Airport get_next_airport(){
-        return null;
+        return airportSupplier.get();
     }
 
     public void add_event(Event e){

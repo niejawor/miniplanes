@@ -1,11 +1,13 @@
 /*
-Prosty supplier wyrzucający (za pomocą get()) kolejne pojawiające się lotniska przy kryterium minimalnej odległości od już widocznych lotnisk
-W konstruktorze bierze kolekcję lotnisk, na której ma pracować i lotnisko startowe (jego nie będzie wyrzucał, zacznie od najbliższego jemu)
+Prosty supplier wyrzucający (za pomocą get()) kolejne pojawiające się lotniska przy naiwnym kryterium
+minimalnej odległości od już wyplutych lotnisk
+W konstruktorze bierze kolekcję lotnisk, na której ma pracować i (opcjonalne) lotnisko startowe.
+Opcjonalne tzn. null, jak null to wtedy losuje sobie pierwsze i zaczyna wypluwanie od niego.
+Jak start!=null to wtedy nie wypluwa start, tylko wypluwa kolejne
+
  */
 
-package viewmodel;
-
-import model.Airport;
+package model;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -15,23 +17,36 @@ public class AirportSupplier implements Supplier<Airport> {
     private final HashMap<Airport, Float> minDist; //HashMap, bo żadne dwa różne lotniska nie są semantycznie identyczne
     private Airport prevDel;
 
-    AirportSupplier(Collection<Airport> collection, Airport start){
-        prevDel = start;
+    private void initialize(Airport start){
         float temp;
-        unused = new LinkedHashSet<>(collection);
-        used = new LinkedHashSet<>();
-        minDist = new HashMap<>();
         used.add(start);
-        unused.remove(start);
         for (Airport airport : unused) {
             temp = airport.distance(start);
             minDist.put(airport, temp);
         }
     }
 
+    public AirportSupplier(Collection<Airport> collection, Airport start){
+        prevDel = start;
+        unused = new LinkedHashSet<>(collection.stream().filter(Objects::nonNull).toList());
+        used = new LinkedHashSet<>();
+        minDist = new HashMap<>();
+        if(start != null) {
+            unused.remove(start);
+            initialize(start);
+        }
+    }
+
+
     @Override
     public Airport get(){
         if (unused.isEmpty()) throw new IllegalStateException("Wszystkie lotniska wyczerpane");
+
+        if (prevDel == null){
+            initialize(prevDel = unused.removeFirst());
+            return prevDel;
+        }
+
         Airport next = null;
         float currentMinDist, newDist, best = -1f;
         for (Airport airport : unused) {
@@ -51,5 +66,4 @@ public class AirportSupplier implements Supplier<Airport> {
         minDist.remove(next);
         return prevDel = next;
     }
-
 }
