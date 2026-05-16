@@ -2,7 +2,6 @@ package model;
 
 import java.util.function.Supplier;
 import java.util.Random;
-import java.util.stream.IntStream;
 
 /*
 By Jakub Stachniak on 15.03.2026

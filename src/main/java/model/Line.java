@@ -48,5 +48,4 @@ public final class Line {
     public boolean delAirport(Airport airport){
         return path.remove(airport);
     }
-
 }

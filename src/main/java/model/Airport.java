@@ -171,4 +171,8 @@ public class Airport {
             a.startTakeOffProcedure();
         }
     }
+
+    public float distance(Airport airport){
+        return airport.getPosition().distance(position);
+    }
 }

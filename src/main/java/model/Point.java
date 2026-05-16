@@ -42,7 +42,7 @@ public final class Point {
         return y;
     }
 
-    public Point getCoordinates(){
+    public Point getCopy(){
         return new Point(x,y);
     }
 }

@@ -65,7 +65,7 @@ public class Airplane {
 
         float dx = targetPos.getX() - position.getX();
         float dy = targetPos.getY() - position.getY();
-        float distance = (float) Math.sqrt(dx * dx + dy * dy);
+        float distance = position.distance(targetPos);
 
         float moveDist = type.speed * deltaTime;
 
@@ -100,7 +100,7 @@ public class Airplane {
     }
 
     public Point getPosition() {
-        return position;
+        return position.getCopy();
     }
 
     public void startTakeOffProcedure() {
