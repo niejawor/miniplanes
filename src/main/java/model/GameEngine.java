@@ -22,18 +22,17 @@ public class GameEngine {
     private AtomicInteger number_of_available_lines;
     private AtomicInteger number_of_available_airplanes;
 
-    private final int limit_of_lines = 0;
-
-    private final int update_time = 60*60*5; //co 5 minut
-
-    private final int max_overcrowded_time = 60*60; //minuta
-
+    private final int limit_of_lines = 7;
 
     private AtomicInteger total_transported_passengers;
 
     private AtomicBoolean isRunning;
     private final int TARGET_TPS = 90;
     private final int OPTIMAL_TIME = 1000000000 / TARGET_TPS; // w nano sekundach
+
+
+    private final int update_time = TARGET_TPS*60*5; //co 5 minut
+    private final int max_overcrowded_time = TARGET_TPS*60; //minuta
 
     public GameEngine() {
         current_tick = new AtomicInteger(0);
@@ -83,6 +82,14 @@ public class GameEngine {
         return isRunning.get();
     }
 
+    
+    public void pause(){
+        isRunning.set(false);
+    }
+    public void resume(){
+        isRunning.set(true);
+    }
+
 
 
     public void Simulate(){
@@ -90,6 +97,22 @@ public class GameEngine {
 
         while(true){
             long start_time = System.nanoTime();
+
+
+            if(!isRunning.get()){
+                if(System.nanoTime() - start_time < OPTIMAL_TIME){
+                    try{
+                        long time_left = System.nanoTime() - start_time;
+                        long millis = time_left / 1000000;
+                        int nanos = (int) (time_left % 1000000);
+                        Thread.sleep(millis, nanos);
+
+                    } catch (Exception e){}
+                }
+
+                current_tick.getAndIncrement();
+                continue;
+            }
 
 
             while(!events.isEmpty()){
@@ -129,7 +152,7 @@ public class GameEngine {
 
             //dodanie nowych lotnisk jesli jest na to czas - poczatkowo co 2 minuty
 
-            if(get_tick % 60*60*2 == 0){
+            if(get_tick % TARGET_TPS*60*2 == 0){
                 try {
                     airports.add(get_next_airport());
                 } catch (Exception e) {
