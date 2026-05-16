@@ -35,12 +35,12 @@ public class GameEngine {
     private final int TARGET_TPS = 90;
     private final int OPTIMAL_TIME = 1000000000 / TARGET_TPS; // w nano sekundach
 
-    GameEngine() {
+    public GameEngine() {
         current_tick = new AtomicInteger(0);
         total_transported_passengers = new AtomicInteger(0);
         number_of_available_lines = new AtomicInteger(3);
         number_of_available_airplanes = new AtomicInteger(3);
-        isRunning = new AtomicBoolean(false);
+        isRunning = new AtomicBoolean(true);
     }
 
     Airport get_next_airport(){

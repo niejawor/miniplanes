@@ -1,11 +1,9 @@
-import view.Window;
+import model.GameEngine;
 import viewmodel.GamePresenter;
 
 public class Main {
     public static void main(String[] args) {
-        GamePresenter presenter = new GamePresenter();
-        Window window = new Window();
-
-        window.open(presenter);
+        GamePresenter presenter = new GamePresenter(new GameEngine());
+        presenter.gameLoop();
     }
 }

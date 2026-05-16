@@ -1,6 +1,7 @@
 package view;
 
 import model.Airport;
+import model.Airplane;
 import model.Shape;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
@@ -16,13 +17,20 @@ import static org.lwjgl.stb.STBImage.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Window {
-    private int backgroundTexture;
+    private final long winHandle;
+    private final int backgroundTexture;
+    private final int airplaneTexture;
+    GamePresenter presenter;
 
-    public void open(GamePresenter presenter) {
+    public Window(GamePresenter presenter) {
+        this.presenter = presenter;
+
         if (!glfwInit()) throw new IllegalStateException("Błąd GLFW");
 
-        long win = glfwCreateWindow(2304, 1296, presenter.getTitle(), NULL, NULL);
-        glfwMakeContextCurrent(win);
+        winHandle = glfwCreateWindow(2304, 1296, presenter.getTitle(), NULL, NULL);
+        if (winHandle == NULL) throw new RuntimeException("Nie udało się utworzyć okna GLFW");
+
+        glfwMakeContextCurrent(winHandle);
         GL.createCapabilities();
 
         glMatrixMode(GL_PROJECTION);
@@ -32,20 +40,29 @@ public class Window {
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         backgroundTexture = loadTexture("src/assets/mapa.png");
+        airplaneTexture = loadTexture("src/assets/BigAirplane.png");
+    }
 
-        while (!glfwWindowShouldClose(win)) {
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    public boolean shouldClose() {
+        return glfwWindowShouldClose(winHandle);
+    }
 
-            drawBackground();
-
-            drawAirports(presenter);
-
-            glfwSwapBuffers(win);
-            glfwPollEvents();
-        }
-
+    public void terminate() {
+        glfwDestroyWindow(winHandle);
         glfwTerminate();
+    }
+
+    public void render() {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        drawBackground();
+        drawAirports();
+        //drawAirplanes();
+
+        glfwSwapBuffers(winHandle);
+        glfwPollEvents();
     }
 
     private void drawBackground() {
@@ -64,48 +81,141 @@ public class Window {
         glDisable(GL_TEXTURE_2D);
     }
 
-    private void drawAirports(GamePresenter presenter) {
+    private void drawAirports() {
         float size = 0.008f;
-
         for (Airport airport : presenter.getAirports()) {
             float x = airport.getPosition().getX();
             float y = airport.getPosition().getY();
-            Shape shape = airport.getShape();
-
             glColor3f(0.8f, 0.1f, 0.1f);
+            drawSingleShape(airport.getShape(), x, y, size);
+        }
+    }
+
+    private void drawAirplanes(GamePresenter presenter) {
+        if (presenter.getAirplanes() == null) return;
+
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, airplaneTexture);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+        for (Airplane plane : presenter.getAirplanes()) {
+            float x = plane.getPosition().getX();
+            float y = plane.getPosition().getY();
+
+            float scale = plane.getPassengersOnBoard().size() > 5 ? 0.015f : 0.01f;
 
             glPushMatrix();
             glTranslatef(x, y, 0);
 
-            glScalef(1.0f, 16.0f / 9.0f, 1.0f);
+            glBegin(GL_QUADS);
+            glTexCoord2f(0, 0); glVertex2f(-scale, -scale);
+            glTexCoord2f(1, 0); glVertex2f(scale, -scale);
+            glTexCoord2f(1, 1); glVertex2f(scale, scale);
+            glTexCoord2f(0, 1); glVertex2f(-scale, scale);
+            glEnd();
 
-            switch (shape) {
-                case Triangle:
-                    glBegin(GL_TRIANGLES);
-                    glVertex2f(0, -size);
-                    glVertex2f(-size, size);
-                    glVertex2f(size, size);
-                    glEnd();
-                    break;
-                case Circle:
-                    glBegin(GL_POLYGON);
-                    for (int i = 0; i < 360; i += 20) {
-                        float rad = (float) Math.toRadians(i);
-                        glVertex2f((float) Math.cos(rad) * size, (float) Math.sin(rad) * size);
-                    }
-                    glEnd();
-                    break;
-                default:
-                    glBegin(GL_QUADS);
-                    glVertex2f(-size, -size);
-                    glVertex2f(size, -size);
-                    glVertex2f(size, size);
-                    glVertex2f(-size, size);
-                    glEnd();
-                    break;
-            }
             glPopMatrix();
         }
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    private void drawSingleShape(Shape shape, float x, float y, float size) {
+        glPushMatrix();
+        glTranslatef(x, y, 0);
+        glScalef(1.0f, 16.0f / 9.0f, 1.0f);
+
+        float s;
+
+        switch (shape) {
+            case Triangle:
+                s = size * 1.1f;
+                glBegin(GL_TRIANGLES);
+                glVertex2f(0, -s);
+                glVertex2f(-s, s);
+                glVertex2f(s, s);
+                glEnd();
+                break;
+
+            case Circle:
+                s = size * 1.05f;
+                glBegin(GL_POLYGON);
+                for (int i = 0; i < 360; i += 20) {
+                    float rad = (float) Math.toRadians(i);
+                    glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
+                }
+                glEnd();
+                break;
+
+            case Diamond:
+                s = size * 1.35f;
+                glBegin(GL_QUADS);
+                glVertex2f(0, -s);
+                glVertex2f(s, 0);
+                glVertex2f(0, s);
+                glVertex2f(-s, 0);
+                glEnd();
+                break;
+
+            case Pentagon:
+                s = size * 1.15f;
+                glBegin(GL_POLYGON);
+                for (int i = 0; i < 5; i++) {
+                    float rad = (float) Math.toRadians(i * 72 - 90);
+                    glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
+                }
+                glEnd();
+                break;
+
+            case Hexagon:
+                s = size * 1.15f;
+                glBegin(GL_POLYGON);
+                for (int i = 0; i < 6; i++) {
+                    float rad = (float) Math.toRadians(i * 60 - 90);
+                    glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
+                }
+                glEnd();
+                break;
+
+            case Cross:
+                s = size * 1.1f;
+                glBegin(GL_QUADS);
+                glVertex2f(-s / 3.0f, -s);
+                glVertex2f(s / 3.0f, -s);
+                glVertex2f(s / 3.0f, s);
+                glVertex2f(-s / 3.0f, s);
+                glVertex2f(-s, -s / 3.0f);
+                glVertex2f(s, -s / 3.0f);
+                glVertex2f(s, s / 3.0f);
+                glVertex2f(-s, s / 3.0f);
+                glEnd();
+                break;
+
+            case Star:
+                s = size * 1.35f;
+                glBegin(GL_TRIANGLE_FAN);
+                glVertex2f(0, 0);
+                for (int i = 0; i <= 10; i++) {
+                    float rad = (float) Math.toRadians(i * 36 - 90);
+                    float r = (i % 2 == 0) ? s : s / 2.4f;
+                    glVertex2f((float) Math.cos(rad) * r, (float) Math.sin(rad) * r);
+                }
+                glEnd();
+                break;
+
+            case Square:
+            default:
+                s = size * 0.95f;
+                glBegin(GL_QUADS);
+                glVertex2f(-s, -s);
+                glVertex2f(s, -s);
+                glVertex2f(s, s);
+                glVertex2f(-s, s);
+                glEnd();
+                break;
+        }
+        glPopMatrix();
     }
 
     private int loadTexture(String filepath) {
