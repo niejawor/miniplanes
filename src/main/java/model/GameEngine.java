@@ -1,7 +1,5 @@
 package model;
 
-import viewmodel.AirportListGenerator;
-
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;

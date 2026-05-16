@@ -1,6 +1,7 @@
 package viewmodel;
 
 import model.Airport;
+import model.AirportListGenerator;
 import model.BasicGameData;
 import java.util.List;
 

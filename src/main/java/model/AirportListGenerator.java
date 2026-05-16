@@ -1,6 +1,4 @@
-package viewmodel;
-
-import model.*;
+package model;
 
 import java.util.ArrayList;
 import java.util.List;
