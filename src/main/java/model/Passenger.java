@@ -3,6 +3,10 @@ package model;
 public class Passenger {
     Shape destination;
 
+    public Passenger(Shape destination) {
+        this.destination = destination;
+    }
+
     public boolean wantsToBoard(Airplane airplane) {
         if (airplane.isFlyingForward()) {
             for (int i = airplane.idx; i < airplane.line.size(); i++)
