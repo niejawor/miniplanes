@@ -130,7 +130,11 @@ public class GameEngine {
             //dodanie nowych lotnisk jesli jest na to czas - poczatkowo co 2 minuty
 
             if(get_tick % 60*60*2 == 0){
-                airports.add(get_next_airport());
+                try {
+                    airports.add(get_next_airport());
+                } catch (Exception e) {
+
+                }
             }
 
             if(System.nanoTime() - start_time < OPTIMAL_TIME){
