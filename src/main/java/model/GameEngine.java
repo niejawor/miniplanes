@@ -1,5 +1,6 @@
 package model;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -15,7 +16,8 @@ public class GameEngine {
     private final List<Airport> airports = new CopyOnWriteArrayList<>();
     private final List<Airplane> airplanes = new CopyOnWriteArrayList<>();
     private final List<Line> lines = new CopyOnWriteArrayList<>();
-    private final Supplier<Airport> airportSupplier = new AirportSupplier(AirportListGenerator.generateAirports(), null);
+    private final Supplier<Airport> airportSupplier = new AirportSupplier(AirportListGenerator.generateAirports(this), null);
+    private final EnumIterator<Shape> shapeHandler = new EnumIterator<>(Shape.class);
 
     private final Queue<Event> events = new ConcurrentLinkedQueue<>();
 
@@ -43,7 +45,9 @@ public class GameEngine {
     }
 
     Airport get_next_airport(){
-        return airportSupplier.get();
+        Airport next =  airportSupplier.get();
+        shapeHandler.updateUse(next.getShape());
+        return next;
     }
 
     public void add_event(Event e){
@@ -90,6 +94,9 @@ public class GameEngine {
         isRunning.set(true);
     }
 
+    public void generatePassenger(Airport airport){
+        airport.addPassenger(new Passenger(shapeHandler.getRandomUsed()));
+    }
 
 
     public void Simulate(){
