@@ -1,9 +1,7 @@
 package viewmodel;
 
-import model.Airplane;
-import model.Airport;
-import model.BasicGameData;
-import model.GameEngine;
+import model.*;
+
 import java.util.List;
 import view.Window;
 
@@ -30,4 +28,14 @@ public class GamePresenter {
     public String getTitle() { return data.getTitle(); }
     public List<Airport> getAirports() { return engine.get_airports(); }
     public List<Airplane> getAirplanes() { return engine.get_airplanes(); }
+    public List<Line> getLines() { return engine.get_lines(); }
+
+    public void createConfirmedRoute(List<Airport> routeAirports) {
+        Line newLine = new Line(routeAirports.get(0), routeAirports.get(1));
+
+        for (int i = 2; i < routeAirports.size(); i++)
+            newLine.addAirportToEdge(routeAirports.get(i - 1), routeAirports.get(i));
+
+        engine.get_lines().add(newLine);
+    }
 }

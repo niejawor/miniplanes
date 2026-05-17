@@ -4,12 +4,16 @@ import model.Airport;
 import model.Airplane;
 import model.Passenger;
 import model.Shape;
+import model.Line;
+import model.Color;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
 import viewmodel.GamePresenter;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -24,6 +28,11 @@ public class Window {
     private final int airplaneTexture;
     GamePresenter presenter;
 
+    private final List<Airport> currentRoute = new ArrayList<>();
+    private double mouseX = 0.0, mouseY = 0.0;
+    private final int windowWidth = 2304;
+    private final int windowHeight = 1296;
+
     public Window(GamePresenter presenter) {
         this.presenter = presenter;
 
@@ -31,7 +40,7 @@ public class Window {
 
         glfwWindowHint(GLFW_SAMPLES, 4);
 
-        winHandle = glfwCreateWindow(2304, 1296, presenter.getTitle(), NULL, NULL);
+        winHandle = glfwCreateWindow(windowWidth, windowHeight, presenter.getTitle(), NULL, NULL);
         if (winHandle == NULL) throw new RuntimeException("Nie udało się utworzyć okna GLFW");
 
         glfwMakeContextCurrent(winHandle);
@@ -48,6 +57,27 @@ public class Window {
         glEnable(GL_MULTISAMPLE);
         glEnable(GL_LINE_SMOOTH);
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+
+        glfwSetCursorPosCallback(winHandle, (window, xpos, ypos) -> {
+            mouseX = xpos / windowWidth;
+            mouseY = ypos / windowHeight;
+        });
+
+        glfwSetMouseButtonCallback(winHandle, (window, button, action, mods) -> {
+            if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+                handleMouseClick();
+            } else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+                currentRoute.clear();
+            }
+        });
+
+        glfwSetKeyCallback(winHandle, (window, key, scancode, action, mods) -> {
+            if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
+                handleEnterPress();
+            } else if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+                currentRoute.clear();
+            }
+        });
 
         backgroundTexture = loadTexture("src/assets/mapa.png");
         airplaneTexture = loadTexture("src/assets/BigAirplane.png");
@@ -66,6 +96,8 @@ public class Window {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         drawBackground();
+        drawTempRoute();
+        drawLines();
         drawAirports();
         //drawAirplanes();
 
@@ -345,5 +377,85 @@ public class Window {
 
         stbi_image_free(image);
         return textureID;
+    }
+
+    private void handleMouseClick() {
+        Airport clicked = null;
+        float minDistance = 0.02f;
+
+        for (Airport airport : presenter.getAirports()) {
+            float dx = airport.getPosition().getX() - (float) mouseX;
+            float dy = airport.getPosition().getY() - (float) mouseY;
+            float dist = (float) Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < minDistance) {
+                clicked = airport;
+                break;
+            }
+        }
+
+        if (clicked != null && (currentRoute.isEmpty() || currentRoute.get(currentRoute.size() - 1) != clicked))
+            currentRoute.add(clicked);
+    }
+
+    private void handleEnterPress() {
+        if (currentRoute.size() >= 2)
+            presenter.createConfirmedRoute(new ArrayList<>(currentRoute));
+        currentRoute.clear();
+    }
+
+    private void drawTempRoute() {
+        if (currentRoute.isEmpty()) return;
+
+        glColor4f(0.3f, 0.3f, 0.3f, 0.8f);
+        glLineWidth(4.0f);
+
+        glBegin(GL_LINE_STRIP);
+
+        for (Airport a : currentRoute)
+            glVertex2f(a.getPosition().getX(), a.getPosition().getY());
+
+        glVertex2d(mouseX, mouseY);
+
+        glEnd();
+        glLineWidth(1.0f);
+    }
+
+    private void drawLines() {
+        if (presenter.getLines() == null || presenter.getLines().isEmpty()) return;
+
+        glLineWidth(5.0f);
+
+        for (Line line : presenter.getLines()) {
+            if (line.size() < 2) continue;
+
+            setOpenGLColor(line.color);
+
+            glBegin(GL_LINE_STRIP);
+            for (int i = 0; i < line.size(); i++) {
+                Airport airport = line.get(i);
+                glVertex2f(airport.getPosition().getX(), airport.getPosition().getY());
+            }
+            glEnd();
+        }
+
+        glLineWidth(1.0f);
+    }
+
+    private void setOpenGLColor(Color color) {
+        switch (color) {
+            case Red:
+                glColor3f(0.8f, 0.2f, 0.2f);
+                break;
+            case Green:
+                glColor3f(0.2f, 0.8f, 0.2f);
+                break;
+            case Blue:
+                glColor3f(0.2f, 0.2f, 0.8f);
+                break;
+            default:
+                glColor3f(0.0f, 0.0f, 0.0f);
+                break;
+        }
     }
 }
