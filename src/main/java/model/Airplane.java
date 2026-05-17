@@ -3,6 +3,7 @@ package model;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Airplane {
     Line line;
@@ -14,7 +15,7 @@ public class Airplane {
 
     AirplaneType type;
 
-    private final List<Passenger> passengersOnBoard = new ArrayList<>();
+    private final List<Passenger> passengersOnBoard = new CopyOnWriteArrayList<>();;
     private float timeSpent = 0;
 
     Airplane(Line line, AirplaneType type) {

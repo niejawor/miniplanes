@@ -7,6 +7,10 @@ public class Passenger {
         this.destination = destination;
     }
 
+    public Shape getDestination() {
+        return destination;
+    }
+
     public boolean wantsToBoard(Airplane airplane) {
         if (airplane.isFlyingForward()) {
             for (int i = airplane.idx; i < airplane.line.size(); i++)

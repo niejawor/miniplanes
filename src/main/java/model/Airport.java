@@ -3,6 +3,7 @@ package model;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Airport {
     public static class AirplaneEntry {
@@ -19,13 +20,13 @@ public class Airport {
     private final Point position;
     private final AirportType type;
 
-    private final List<Passenger> passengers = new ArrayList<>();
+    private final List<Passenger> passengers = new CopyOnWriteArrayList<>();
 
-    private final ArrayList<Airplane> queuedAirplanes = new ArrayList<>();
+    private final List<Airplane> queuedAirplanes = new CopyOnWriteArrayList<>();
 
-    private final ArrayList<AirplaneEntry> parkedAirplanes = new ArrayList<>();
-    private final ArrayList<AirplaneEntry> landingAirplanes = new ArrayList<>();
-    private final ArrayList<AirplaneEntry> startingAirplanes = new ArrayList<>();
+    private final List<AirplaneEntry> parkedAirplanes = new CopyOnWriteArrayList<>();
+    private final List<AirplaneEntry> landingAirplanes = new CopyOnWriteArrayList<>();
+    private final List<AirplaneEntry> startingAirplanes = new CopyOnWriteArrayList<>();
 
     private int currentlyFreeTerminal = 0;
     private int currentlyFreeLandingRunway = 0;
@@ -100,7 +101,7 @@ public class Airport {
     }
 
     private float lastNewPassenger = 0f;
-    private final float newPassengerThreshold = 300f;
+    private final float newPassengerThreshold = 5f;
     EnumIterator<Shape> shapeHandler = new EnumIterator<>(Shape.class);
     private void generateNewPassengers(float deltaTime) {
         lastNewPassenger += deltaTime;

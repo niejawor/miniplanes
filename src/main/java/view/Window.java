@@ -2,6 +2,7 @@ package view;
 
 import model.Airport;
 import model.Airplane;
+import model.Passenger;
 import model.Shape;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL;
@@ -13,6 +14,7 @@ import java.nio.IntBuffer;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
+import static org.lwjgl.opengl.GL13C.GL_MULTISAMPLE;
 import static org.lwjgl.stb.STBImage.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
@@ -27,6 +29,8 @@ public class Window {
 
         if (!glfwInit()) throw new IllegalStateException("Błąd GLFW");
 
+        glfwWindowHint(GLFW_SAMPLES, 4);
+
         winHandle = glfwCreateWindow(2304, 1296, presenter.getTitle(), NULL, NULL);
         if (winHandle == NULL) throw new RuntimeException("Nie udało się utworzyć okna GLFW");
 
@@ -40,6 +44,10 @@ public class Window {
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glEnable(GL_MULTISAMPLE);
+        glEnable(GL_LINE_SMOOTH);
+        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
         backgroundTexture = loadTexture("src/assets/mapa.png");
         airplaneTexture = loadTexture("src/assets/BigAirplane.png");
@@ -88,10 +96,11 @@ public class Window {
             float y = airport.getPosition().getY();
             glColor3f(0.8f, 0.1f, 0.1f);
             drawSingleShape(airport.getShape(), x, y, size);
+            drawAirportDetails(airport);
         }
     }
 
-    private void drawAirplanes(GamePresenter presenter) {
+    private void drawAirplanes() {
         if (presenter.getAirplanes() == null) return;
 
         glEnable(GL_TEXTURE_2D);
@@ -121,12 +130,33 @@ public class Window {
         glDisable(GL_TEXTURE_2D);
     }
 
+    private void drawAirportDetails(Airport airport) {
+        float x = airport.getPosition().getX();
+        float y = airport.getPosition().getY();
+
+        int passCount = 0;
+        int maxPassengersToShow = 10;
+        glColor3f(0.2f, 0.2f, 0.8f);
+        for (Passenger p : airport.getPassengers()) {
+            if (passCount >= maxPassengersToShow) break;
+            if (passCount >= airport.getAirportType().passengerCapacity)
+                glColor3f(0f, 0f, 0f);
+            float px = x + ((passCount % 5) * 0.008f) + 0.004f;
+            float py = y + ((passCount / 5) * 0.015f) + 0.028f;
+            drawSingleShape(p.getDestination(), px, py, 0.003f);
+            passCount++;
+        }
+    }
+
     private void drawSingleShape(Shape shape, float x, float y, float size) {
         glPushMatrix();
         glTranslatef(x, y, 0);
         glScalef(1.0f, 16.0f / 9.0f, 1.0f);
 
         float s;
+
+        float[] fillColor = new float[4];
+        glGetFloatv(GL_CURRENT_COLOR, fillColor);
 
         switch (shape) {
             case Triangle:
@@ -135,6 +165,12 @@ public class Window {
                 glVertex2f(0, -s);
                 glVertex2f(-s, s);
                 glVertex2f(s, s);
+                glEnd();
+
+                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
+                glLineWidth(1.8f);
+                glBegin(GL_LINE_LOOP);
+                glVertex2f(0, -s); glVertex2f(-s, s); glVertex2f(s, s);
                 glEnd();
                 break;
 
@@ -146,21 +182,45 @@ public class Window {
                     glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
                 }
                 glEnd();
+
+                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
+                glLineWidth(1.8f);
+                glBegin(GL_LINE_LOOP);
+                for (int i = 0; i < 360; i += 20) {
+                    float rad = (float) Math.toRadians(i);
+                    glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
+                }
+                glEnd();
                 break;
 
             case Diamond:
-                s = size * 1.35f;
+                s = size * 1.2f;
                 glBegin(GL_QUADS);
                 glVertex2f(0, -s);
                 glVertex2f(s, 0);
                 glVertex2f(0, s);
                 glVertex2f(-s, 0);
                 glEnd();
+
+                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
+                glLineWidth(1.8f);
+                glBegin(GL_LINE_LOOP);
+                glVertex2f(0, -s); glVertex2f(s, 0); glVertex2f(0, s); glVertex2f(-s, 0);
+                glEnd();
                 break;
 
             case Pentagon:
                 s = size * 1.15f;
                 glBegin(GL_POLYGON);
+                for (int i = 0; i < 5; i++) {
+                    float rad = (float) Math.toRadians(i * 72 - 90);
+                    glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
+                }
+                glEnd();
+
+                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
+                glLineWidth(1.8f);
+                glBegin(GL_LINE_LOOP);
                 for (int i = 0; i < 5; i++) {
                     float rad = (float) Math.toRadians(i * 72 - 90);
                     glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
@@ -176,19 +236,43 @@ public class Window {
                     glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
                 }
                 glEnd();
+
+                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
+                glLineWidth(1.8f);
+                glBegin(GL_LINE_LOOP);
+                for (int i = 0; i < 6; i++) {
+                    float rad = (float) Math.toRadians(i * 60 - 90);
+                    glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
+                }
+                glEnd();
                 break;
 
             case Cross:
                 s = size * 1.1f;
                 glBegin(GL_QUADS);
-                glVertex2f(-s / 3.0f, -s);
-                glVertex2f(s / 3.0f, -s);
-                glVertex2f(s / 3.0f, s);
-                glVertex2f(-s / 3.0f, s);
+
                 glVertex2f(-s, -s / 3.0f);
                 glVertex2f(s, -s / 3.0f);
                 glVertex2f(s, s / 3.0f);
                 glVertex2f(-s, s / 3.0f);
+
+                glVertex2f(-s / 3.0f, -s);
+                glVertex2f(s / 3.0f, -s);
+                glVertex2f(s / 3.0f, s);
+                glVertex2f(-s / 3.0f, s);
+                glEnd();
+
+                float[][] crossVertices = {
+                        {-s/3.0f, -s}, {s/3.0f, -s}, {s/3.0f, -s/3.0f}, {s, -s/3.0f},
+                        {s, s/3.0f}, {s/3.0f, s/3.0f}, {s/3.0f, s}, {-s/3.0f, s},
+                        {-s/3.0f, s/3.0f}, {-s, s/3.0f}, {-s, -s/3.0f}, {-s/3.0f, -s/3.0f}
+                };
+
+                glColor3f(0.0f, 0.0f, 0.0f);
+                glLineWidth(1.8f);
+                glBegin(GL_LINE_LOOP);
+                for (float[] v : crossVertices)
+                    glVertex2f(v[0], v[1]);
                 glEnd();
                 break;
 
@@ -197,6 +281,16 @@ public class Window {
                 glBegin(GL_TRIANGLE_FAN);
                 glVertex2f(0, 0);
                 for (int i = 0; i <= 10; i++) {
+                    float rad = (float) Math.toRadians(i * 36 - 90);
+                    float r = (i % 2 == 0) ? s : s / 2.4f;
+                    glVertex2f((float) Math.cos(rad) * r, (float) Math.sin(rad) * r);
+                }
+                glEnd();
+
+                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
+                glLineWidth(1.8f);
+                glBegin(GL_LINE_LOOP);
+                for (int i = 0; i < 10; i++) {
                     float rad = (float) Math.toRadians(i * 36 - 90);
                     float r = (i % 2 == 0) ? s : s / 2.4f;
                     glVertex2f((float) Math.cos(rad) * r, (float) Math.sin(rad) * r);
@@ -213,8 +307,17 @@ public class Window {
                 glVertex2f(s, s);
                 glVertex2f(-s, s);
                 glEnd();
+
+                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
+                glLineWidth(1.8f);
+                glBegin(GL_LINE_LOOP);
+                glVertex2f(-s, -s); glVertex2f(s, -s); glVertex2f(s, s); glVertex2f(-s, s);
+                glEnd();
                 break;
         }
+
+        glColor4f(fillColor[0], fillColor[1], fillColor[2], fillColor[3]);
+        glLineWidth(1.0f);
         glPopMatrix();
     }
 
