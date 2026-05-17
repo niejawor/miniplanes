@@ -38,7 +38,8 @@ public class Airplane {
         while (it.hasNext()) {
             if (!(p = it.next()).wantsToContinue(this)) {
                 line.get(idx).addPassenger(p);
-                it.remove();
+                passengersOnBoard.remove(p);
+                //it.remove();
             }
         }
     }
@@ -49,7 +50,8 @@ public class Airplane {
         while (it.hasNext() && passengersOnBoard.size() < type.capacity) {
             if ((p = it.next()).wantsToBoard(this)) {
                 passengersOnBoard.add(p);
-                it.remove();
+                line.get(idx).getPassengers().remove(p);
+                //it.remove();
             }
         }
     }

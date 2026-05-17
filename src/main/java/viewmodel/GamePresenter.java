@@ -36,6 +36,6 @@ public class GamePresenter {
         for (int i = 2; i < routeAirports.size(); i++)
             newLine.addAirportToEdge(routeAirports.get(i - 1), routeAirports.get(i));
 
-        engine.get_lines().add(newLine);
+        engine.addLine(newLine);
     }
 }

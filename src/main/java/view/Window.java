@@ -99,7 +99,7 @@ public class Window {
         drawTempRoute();
         drawLines();
         drawAirports();
-        //drawAirplanes();
+        drawAirplanes();
 
         glfwSwapBuffers(winHandle);
         glfwPollEvents();

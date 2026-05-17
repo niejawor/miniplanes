@@ -104,7 +104,6 @@ public class Airport {
 
     private float lastNewPassenger = 0f;
     private final float newPassengerThreshold = 5f;
-    EnumIterator<Shape> shapeHandler = new EnumIterator<>(Shape.class);
     private void generateNewPassengers(float deltaTime) {
         lastNewPassenger += deltaTime;
         if (lastNewPassenger >= newPassengerThreshold) {
@@ -133,7 +132,8 @@ public class Airport {
         while (it.hasNext()) {
             if ((entry=it.next()).airplane.getTimeSpent() >= type.timeSpentTakingOff) {
                 entry.airplane.startNextJourney();
-                it.remove();
+                startingAirplanes.remove(entry);
+                //it.remove();
             }
         }
     }
@@ -147,7 +147,8 @@ public class Airport {
                 currentlyFreeTerminal += 1;
                 currentlyFreeTerminal %= type.terminals;
                 entry.airplane.startDockingProcedure();
-                it.remove();
+                landingAirplanes.remove(entry);
+                //it.remove();
             }
         }
     }

@@ -70,6 +70,13 @@ public class GameEngine {
         return lines;
     }
 
+    public void addLine(Line line) {
+        Airplane newAirplane = new Airplane(line, AirplaneType.SmallAirplane);
+        airplanes.add(newAirplane);
+        lines.add(line);
+        line.get(0).airplaneReportsToLanding(newAirplane);
+    }
+
     public int get_total_transported_passengers(){
         return total_transported_passengers.get();
     }
