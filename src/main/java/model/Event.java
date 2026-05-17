@@ -1,24 +1,44 @@
 package model;
 
+import java.util.List;
+
 public interface Event {
 
-    void handle_event();
+    //zwraca true jesli operacja sie powiodla
+    public boolean handle_event();
 
-    // pryywatne klasy ktere implementuja ten interfejs odpowiedzialne za poszczegolny eventy
+    // prywatne klasy ktere implementuja ten interfejs odpowiedzialne za poszczegolny eventy
 
     public class AddLineEvent implements Event {
         GameEngine engine;
-        int id_of_first_airport;
-        int id_of_second_airport;
+        List<Airport> route;
 
-        AddLineEvent(int id_of_first_airport, int id_of_second_airport, GameEngine engine) {
-            this.id_of_first_airport = id_of_first_airport;
-            this.id_of_second_airport = id_of_second_airport;
+        public AddLineEvent(GameEngine engine, List<Airport> route) {
             this.engine = engine;
+            this.route = route;
         }
 
         @Override
-        public void handle_event() {}
+        public boolean handle_event() {
+            if(engine.get_number_of_available_lines() == 0 || engine.get_number_of_available_airplanes() == 0){
+                return false;
+            }
+            engine.decrement_number_of_available_lines();
+            engine.decrement_number_of_available_airplanes();
+
+            Line newLine = new Line(route.get(0), route.get(1));
+
+            for (int i = 2; i < route.size(); i++) {
+                newLine.addAirportToEdge(route.get(i - 1), route.get(i));
+            }
+
+            Airplane airplane = new Airplane(newLine, AirplaneType.SmallAirplane);
+            newLine.get(0).airplaneReportsToLanding(airplane);
+
+            engine.add_line(newLine, airplane);
+
+            return true;
+        }
     }
 
     public class RemoveLineEvent implements Event {
@@ -31,7 +51,9 @@ public interface Event {
         }
 
         @Override
-        public void handle_event() {}
+        public boolean handle_event() {
+            return true;
+        }
     }
 
     public class EditLineAddEvent implements Event {
@@ -50,7 +72,9 @@ public interface Event {
         }
 
         @Override
-        public void handle_event() {}
+        public boolean handle_event() {
+            return true;
+        }
     }
 
     public class EditLineRemoveEvent implements Event {
@@ -65,7 +89,9 @@ public interface Event {
         }
 
         @Override
-        public void handle_event() {}
+        public boolean handle_event() {
+            return true;
+        }
     }
 
     public class AddAirplaneEvent implements Event {
@@ -78,7 +104,9 @@ public interface Event {
         }
 
         @Override
-        public void handle_event() {}
+        public boolean handle_event() {
+            return true;
+        }
     }
 
     public class RemoveAirplaneEvent implements Event {
@@ -93,6 +121,8 @@ public interface Event {
         }
 
         @Override
-        public void handle_event() {}
+        public boolean handle_event() {
+            return true;
+        }
     }
 }

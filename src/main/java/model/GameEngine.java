@@ -39,8 +39,8 @@ public class GameEngine {
     public GameEngine() {
         current_tick = new AtomicInteger(0);
         total_transported_passengers = new AtomicInteger(0);
-        number_of_available_lines = new AtomicInteger(3);
-        number_of_available_airplanes = new AtomicInteger(3);
+        number_of_available_lines = new AtomicInteger(5); // 3
+        number_of_available_airplanes = new AtomicInteger(5); // 3
         isRunning = new AtomicBoolean(true);
     }
 
@@ -70,11 +70,9 @@ public class GameEngine {
         return lines;
     }
 
-    public void addLine(Line line) {
-        Airplane newAirplane = new Airplane(line, AirplaneType.SmallAirplane);
-        airplanes.add(newAirplane);
+    public void add_line(Line line, Airplane airplane){
         lines.add(line);
-        line.get(0).airplaneReportsToLanding(newAirplane);
+        airplanes.add(airplane);
     }
 
     public int get_total_transported_passengers(){
@@ -92,7 +90,6 @@ public class GameEngine {
     public boolean is_running(){
         return isRunning.get();
     }
-
     
     public void pause(){
         isRunning.set(false);
@@ -103,6 +100,14 @@ public class GameEngine {
 
     public void generatePassenger(Airport airport){
         airport.addPassenger(new Passenger(shapeHandler.getRandomUsed()));
+    }
+
+    public void decrement_number_of_available_lines(){
+        number_of_available_lines.decrementAndGet();
+    }
+
+    public void decrement_number_of_available_airplanes(){
+        number_of_available_airplanes.decrementAndGet();
     }
 
 

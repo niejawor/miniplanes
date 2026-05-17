@@ -31,11 +31,6 @@ public class GamePresenter {
     public List<Line> getLines() { return engine.get_lines(); }
 
     public void createConfirmedRoute(List<Airport> routeAirports) {
-        Line newLine = new Line(routeAirports.get(0), routeAirports.get(1));
-
-        for (int i = 2; i < routeAirports.size(); i++)
-            newLine.addAirportToEdge(routeAirports.get(i - 1), routeAirports.get(i));
-
-        engine.addLine(newLine);
+        engine.add_event(new Event.AddLineEvent(engine,routeAirports));
     }
 }
