@@ -29,6 +29,8 @@ public class GameEngine {
     private AtomicInteger total_transported_passengers;
 
     private AtomicBoolean isRunning;
+    private AtomicBoolean gameOver;
+
     private final int TARGET_TPS = 90;
     private final int OPTIMAL_TIME = 1000000000 / TARGET_TPS; // w nano sekundach
 
@@ -42,6 +44,7 @@ public class GameEngine {
         number_of_available_lines = new AtomicInteger(5); // 3
         number_of_available_airplanes = new AtomicInteger(5); // 3
         isRunning = new AtomicBoolean(true);
+        gameOver = new AtomicBoolean(false);
     }
 
     Airport get_next_airport(){
@@ -97,6 +100,9 @@ public class GameEngine {
     public void resume(){
         isRunning.set(true);
     }
+    public void gameOver(){
+        gameOver.set(true);
+    }
 
     public void generatePassenger(Airport airport){
         airport.addPassenger(new Passenger(shapeHandler.getRandomUsed()));
@@ -115,6 +121,10 @@ public class GameEngine {
         isRunning = new AtomicBoolean(true);
 
         while(true){
+            if(gameOver.get()){
+                break;
+            }
+
             long start_time = System.nanoTime();
 
 
