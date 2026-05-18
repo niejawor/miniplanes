@@ -182,11 +182,10 @@ public class Window extends ApplicationAdapter {
         if (presenter.getLines() == null || presenter.getLines().isEmpty()) return;
 
         Gdx.gl.glLineWidth(5.0f);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 
         for (Line line : presenter.getLines()) {
             if (line.size() < 2) continue;
-
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
             setShapeRendererColor(line.color);
 
             for (int i = 0; i < line.size() - 1; i++) {
@@ -195,9 +194,9 @@ public class Window extends ApplicationAdapter {
                 shapeRenderer.line(a1.getPosition().getX(), a1.getPosition().getY(), a2.getPosition().getX(), a2.getPosition().getY());
             }
 
-            shapeRenderer.end();
         }
 
+        shapeRenderer.end();
         Gdx.gl.glLineWidth(1.0f);
     }
 

@@ -1,5 +1,6 @@
 package model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Queue;
@@ -51,6 +52,13 @@ public class GameEngine {
         Airport next =  airportSupplier.get();
         shapeHandler.updateUse(next.getShape());
         return next;
+    }
+
+    public void addLine(Line line) {
+        lines.add(line);
+        Airplane a = new Airplane(line, AirplaneType.SmallAirplane);
+        airplanes.add(a);
+        line.get(0).airplaneReportsToLanding(a);
     }
 
     public void add_event(Event e){
