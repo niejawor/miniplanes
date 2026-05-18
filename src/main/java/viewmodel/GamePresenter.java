@@ -1,28 +1,19 @@
 package viewmodel;
 
 import model.*;
-
 import java.util.List;
-import view.Window;
 
 public class GamePresenter {
     private final BasicGameData data;
     private final GameEngine engine;
-    private final Window window;
 
     public GamePresenter(GameEngine engine) {
         this.data = new BasicGameData();
         this.engine = engine;
-        this.window = new Window(this);
-    }
 
-    public void gameLoop() {
-        Thread engineThread = new Thread(() -> engine.Simulate());
+        Thread engineThread = new Thread(() -> this.engine.Simulate());
+        engineThread.setDaemon(true);
         engineThread.start();
-
-        while (!window.shouldClose() && engine.is_running())
-            window.render();
-        window.terminate();
     }
 
     public String getTitle() { return data.getTitle(); }

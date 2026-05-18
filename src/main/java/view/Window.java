@@ -1,133 +1,109 @@
 package view;
 
-import model.Airport;
-import model.Airplane;
-import model.Passenger;
-import model.Shape;
-import model.Line;
-import model.Color;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL;
+import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector3;
+import model.*;
 import viewmodel.GamePresenter;
 
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
-import static org.lwjgl.opengl.GL13C.GL_MULTISAMPLE;
-import static org.lwjgl.stb.STBImage.*;
-import static org.lwjgl.system.MemoryUtil.NULL;
-
-public class Window {
-    private final long winHandle;
-    private final int backgroundTexture;
-    private final int airplaneTexture;
-    GamePresenter presenter;
+public class Window extends ApplicationAdapter {
+    private final GamePresenter presenter;
+    private SpriteBatch batch;
+    private ShapeRenderer shapeRenderer;
+    private OrthographicCamera camera;
+    private Texture backgroundTexture;
+    private Texture airplaneTexture;
 
     private final List<Airport> currentRoute = new ArrayList<>();
-    private double mouseX = 0.0, mouseY = 0.0;
-    private final int windowWidth = 2304;
-    private final int windowHeight = 1296;
+    private final Vector3 mousePos = new Vector3();
 
     public Window(GamePresenter presenter) {
         this.presenter = presenter;
-
-        if (!glfwInit()) throw new IllegalStateException("Błąd GLFW");
-
-        glfwWindowHint(GLFW_SAMPLES, 4);
-
-        winHandle = glfwCreateWindow(windowWidth, windowHeight, presenter.getTitle(), NULL, NULL);
-        if (winHandle == NULL) throw new RuntimeException("Nie udało się utworzyć okna GLFW");
-
-        glfwMakeContextCurrent(winHandle);
-        GL.createCapabilities();
-
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glOrtho(0.0, 1.0, 1.0, 0.0, -1.0, 1.0);
-        glMatrixMode(GL_MODELVIEW);
-
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        glEnable(GL_MULTISAMPLE);
-        glEnable(GL_LINE_SMOOTH);
-        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-
-        glfwSetCursorPosCallback(winHandle, (window, xpos, ypos) -> {
-            mouseX = xpos / windowWidth;
-            mouseY = ypos / windowHeight;
-        });
-
-        glfwSetMouseButtonCallback(winHandle, (window, button, action, mods) -> {
-            if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-                handleMouseClick();
-            } else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-                currentRoute.clear();
-            }
-        });
-
-        glfwSetKeyCallback(winHandle, (window, key, scancode, action, mods) -> {
-            if (key == GLFW_KEY_ENTER && action == GLFW_PRESS) {
-                handleEnterPress();
-            } else if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-                currentRoute.clear();
-            }
-        });
-
-        backgroundTexture = loadTexture("src/assets/mapa.png");
-        airplaneTexture = loadTexture("src/assets/BigAirplane.png");
     }
 
-    public boolean shouldClose() {
-        return glfwWindowShouldClose(winHandle);
-    }
+    @Override
+    public void create() {
+        batch = new SpriteBatch();
+        shapeRenderer = new ShapeRenderer();
 
-    public void terminate() {
-        glfwDestroyWindow(winHandle);
-        glfwTerminate();
+        camera = new OrthographicCamera();
+        camera.setToOrtho(true, 1.0f, 1.0f);
+
+        backgroundTexture = new Texture(Gdx.files.local("src/assets/mapa.png"));
+        airplaneTexture = new Texture(Gdx.files.local("src/assets/BigAirplane.png"));
+
+        Gdx.input.setInputProcessor(new InputAdapter() {
+           @Override
+            public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+               camera.unproject(mousePos.set(screenX, screenY, 0));
+               if (button == Input.Buttons.LEFT)
+                   handleMouseClick(mousePos.x, mousePos.y);
+               else if (button == Input.Buttons.RIGHT)
+                   currentRoute.clear();
+               return true;
+           }
+
+           @Override
+           public boolean keyDown(int keycode) {
+               if (keycode == Input.Keys.ENTER)
+                   handleEnterPress();
+               else if (keycode == Input.Keys.ESCAPE)
+                   currentRoute.clear();
+               return true;
+           }
+
+           @Override
+           public boolean mouseMoved(int screenX, int screenY) {
+               camera.unproject(mousePos.set(screenX, screenY, 0));
+               return true;
+           }
+        });
     }
 
     public void render() {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        Gdx.gl.glClearColor(1, 1, 1, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
-        drawBackground();
+        camera.update();
+        batch.setProjectionMatrix(camera.combined);
+        shapeRenderer.setProjectionMatrix(camera.combined);
+
+        batch.begin();
+        batch.draw(backgroundTexture, 0, 0, 1, 1, 0, 0, backgroundTexture.getWidth(), backgroundTexture.getHeight(), false, true);
+        batch.end();
+
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
         drawTempRoute();
         drawLines();
         drawAirports();
+
+        batch.begin();
         drawAirplanes();
+        batch.end();
 
-        glfwSwapBuffers(winHandle);
-        glfwPollEvents();
-    }
-
-    private void drawBackground() {
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, backgroundTexture);
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-        glBegin(GL_QUADS);
-        glTexCoord2f(0, 0); glVertex2f(0, 0);
-        glTexCoord2f(1, 0); glVertex2f(1, 0);
-        glTexCoord2f(1, 1); glVertex2f(1, 1);
-        glTexCoord2f(0, 1); glVertex2f(0, 1);
-        glEnd();
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glDisable(GL_TEXTURE_2D);
+        Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
     private void drawAirports() {
         float size = 0.008f;
+        Color color = Color.Red;
         for (Airport airport : presenter.getAirports()) {
             float x = airport.getPosition().getX();
             float y = airport.getPosition().getY();
-            glColor3f(0.8f, 0.1f, 0.1f);
-            drawSingleShape(airport.getShape(), x, y, size);
+            drawSingleShape(airport.getShape(), x, y, size, color);
             drawAirportDetails(airport);
         }
     }
@@ -135,31 +111,29 @@ public class Window {
     private void drawAirplanes() {
         if (presenter.getAirplanes() == null) return;
 
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, airplaneTexture);
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
         for (Airplane plane : presenter.getAirplanes()) {
             float x = plane.getPosition().getX();
             float y = plane.getPosition().getY();
+            float scale = plane.getType() == AirplaneType.SmallAirplane ? 0.015f : 0.01f;
 
-            float scale = plane.getPassengersOnBoard().size() > 5 ? 0.015f : 0.01f;
+            float angle = 0f;
+            if (plane.isCurrentlyFlying()) {
+                float destX = plane.getDestination().getPosition().getX();
+                float destY = plane.getDestination().getPosition().getY();
 
-            glPushMatrix();
-            glTranslatef(x, y, 0);
+                float dx = destX - x;
+                float dy = destY - y;
 
-            glBegin(GL_QUADS);
-            glTexCoord2f(0, 0); glVertex2f(-scale, -scale);
-            glTexCoord2f(1, 0); glVertex2f(scale, -scale);
-            glTexCoord2f(1, 1); glVertex2f(scale, scale);
-            glTexCoord2f(0, 1); glVertex2f(-scale, scale);
-            glEnd();
+                angle = (float) Math.toDegrees(Math.atan2(dy, dx));
+            }
 
-            glPopMatrix();
+            float width = scale * 2;
+            float height = scale * 2;
+            float originX = scale;
+            float originY = scale;
+
+            batch.draw(airplaneTexture, x - scale, y - scale, originX, originY, width, height, 1.0f, 1.0f, angle,0, 0, airplaneTexture.getWidth(), airplaneTexture.getHeight(),false, true);
         }
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glDisable(GL_TEXTURE_2D);
     }
 
     private void drawAirportDetails(Airport airport) {
@@ -168,224 +142,217 @@ public class Window {
 
         int passCount = 0;
         int maxPassengersToShow = 10;
-        glColor3f(0.2f, 0.2f, 0.8f);
+
+        Color normalColor = Color.Blue;
+        Color overloadColor = Color.Black;
+        Color color = normalColor;
+
         for (Passenger p : airport.getPassengers()) {
             if (passCount >= maxPassengersToShow) break;
-            if (passCount >= airport.getAirportType().passengerCapacity)
-                glColor3f(0f, 0f, 0f);
+            if (passCount == airport.getAirportType().passengerCapacity)
+                color = overloadColor;
             float px = x + ((passCount % 5) * 0.008f) + 0.004f;
             float py = y + ((passCount / 5) * 0.015f) + 0.028f;
-            drawSingleShape(p.getDestination(), px, py, 0.003f);
+            drawSingleShape(p.getDestination(), px, py, 0.003f, color);
             passCount++;
         }
     }
 
-    private void drawSingleShape(Shape shape, float x, float y, float size) {
-        glPushMatrix();
-        glTranslatef(x, y, 0);
-        glScalef(1.0f, 16.0f / 9.0f, 1.0f);
+    private void drawTempRoute() {
+        if (currentRoute.isEmpty()) return;
+
+        Gdx.gl.glLineWidth(4.0f);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(0.3f, 0.3f, 0.3f, 0.8f);
+
+        for (int i = 0; i < currentRoute.size() - 1; i++) {
+            Airport a1 = currentRoute.get(i);
+            Airport a2 = currentRoute.get(i + 1);
+            shapeRenderer.line(a1.getPosition().getX(), a1.getPosition().getY(), a2.getPosition().getX(), a2.getPosition().getY());
+        }
+
+        Airport last = currentRoute.get(currentRoute.size() - 1);
+        shapeRenderer.line(last.getPosition().getX(), last.getPosition().getY(), mousePos.x, mousePos.y);
+
+        shapeRenderer.end();
+        Gdx.gl.glLineWidth(1.0f);
+    }
+
+    private void drawLines() {
+        if (presenter.getLines() == null || presenter.getLines().isEmpty()) return;
+
+        Gdx.gl.glLineWidth(5.0f);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+
+        for (Line line : presenter.getLines()) {
+            if (line.size() < 2) continue;
+
+            setShapeRendererColor(line.color);
+
+            for (int i = 0; i < line.size() - 1; i++) {
+                Airport a1 = line.get(i);
+                Airport a2 = line.get(i + 1);
+                shapeRenderer.line(a1.getPosition().getX(), a1.getPosition().getY(), a2.getPosition().getX(), a2.getPosition().getY());
+            }
+        }
+
+        shapeRenderer.end();
+        Gdx.gl.glLineWidth(1.0f);
+    }
+
+    private void drawSingleShape(Shape shape, float x, float y, float size, Color color) {
+        Matrix4 transform = new Matrix4();
+        transform.setToTranslation(x, y, 0);
+        transform.scale(1.0f, 16.0f / 9.0f, 1.0f);
+        shapeRenderer.setTransformMatrix(transform);
 
         float s;
 
-        float[] fillColor = new float[4];
-        glGetFloatv(GL_CURRENT_COLOR, fillColor);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        setShapeRendererColor(color);
 
         switch (shape) {
             case Triangle:
                 s = size * 1.1f;
-                glBegin(GL_TRIANGLES);
-                glVertex2f(0, -s);
-                glVertex2f(-s, s);
-                glVertex2f(s, s);
-                glEnd();
-
-                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
-                glLineWidth(1.8f);
-                glBegin(GL_LINE_LOOP);
-                glVertex2f(0, -s); glVertex2f(-s, s); glVertex2f(s, s);
-                glEnd();
+                shapeRenderer.triangle(0, -s, -s, s, s, s);
                 break;
-
             case Circle:
                 s = size * 1.05f;
-                glBegin(GL_POLYGON);
-                for (int i = 0; i < 360; i += 20) {
-                    float rad = (float) Math.toRadians(i);
-                    glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
-                }
-                glEnd();
-
-                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
-                glLineWidth(1.8f);
-                glBegin(GL_LINE_LOOP);
-                for (int i = 0; i < 360; i += 20) {
-                    float rad = (float) Math.toRadians(i);
-                    glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
-                }
-                glEnd();
+                shapeRenderer.circle(0, 0, s, 30);
                 break;
-
             case Diamond:
                 s = size * 1.2f;
-                glBegin(GL_QUADS);
-                glVertex2f(0, -s);
-                glVertex2f(s, 0);
-                glVertex2f(0, s);
-                glVertex2f(-s, 0);
-                glEnd();
-
-                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
-                glLineWidth(1.8f);
-                glBegin(GL_LINE_LOOP);
-                glVertex2f(0, -s); glVertex2f(s, 0); glVertex2f(0, s); glVertex2f(-s, 0);
-                glEnd();
+                shapeRenderer.triangle(0, -s, s, 0, -s, 0);
+                shapeRenderer.triangle(-s, 0, s, 0, 0, s);
                 break;
-
             case Pentagon:
                 s = size * 1.15f;
-                glBegin(GL_POLYGON);
-                for (int i = 0; i < 5; i++) {
-                    float rad = (float) Math.toRadians(i * 72 - 90);
-                    glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
-                }
-                glEnd();
-
-                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
-                glLineWidth(1.8f);
-                glBegin(GL_LINE_LOOP);
-                for (int i = 0; i < 5; i++) {
-                    float rad = (float) Math.toRadians(i * 72 - 90);
-                    glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
-                }
-                glEnd();
+                drawRegularPolygonFilled(5, s);
                 break;
-
             case Hexagon:
                 s = size * 1.15f;
-                glBegin(GL_POLYGON);
-                for (int i = 0; i < 6; i++) {
-                    float rad = (float) Math.toRadians(i * 60 - 90);
-                    glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
-                }
-                glEnd();
-
-                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
-                glLineWidth(1.8f);
-                glBegin(GL_LINE_LOOP);
-                for (int i = 0; i < 6; i++) {
-                    float rad = (float) Math.toRadians(i * 60 - 90);
-                    glVertex2f((float) Math.cos(rad) * s, (float) Math.sin(rad) * s);
-                }
-                glEnd();
+                drawRegularPolygonFilled(6, s);
                 break;
-
             case Cross:
                 s = size * 1.1f;
-                glBegin(GL_QUADS);
-
-                glVertex2f(-s, -s / 3.0f);
-                glVertex2f(s, -s / 3.0f);
-                glVertex2f(s, s / 3.0f);
-                glVertex2f(-s, s / 3.0f);
-
-                glVertex2f(-s / 3.0f, -s);
-                glVertex2f(s / 3.0f, -s);
-                glVertex2f(s / 3.0f, s);
-                glVertex2f(-s / 3.0f, s);
-                glEnd();
-
-                float[][] crossVertices = {
-                        {-s/3.0f, -s}, {s/3.0f, -s}, {s/3.0f, -s/3.0f}, {s, -s/3.0f},
-                        {s, s/3.0f}, {s/3.0f, s/3.0f}, {s/3.0f, s}, {-s/3.0f, s},
-                        {-s/3.0f, s/3.0f}, {-s, s/3.0f}, {-s, -s/3.0f}, {-s/3.0f, -s/3.0f}
-                };
-
-                glColor3f(0.0f, 0.0f, 0.0f);
-                glLineWidth(1.8f);
-                glBegin(GL_LINE_LOOP);
-                for (float[] v : crossVertices)
-                    glVertex2f(v[0], v[1]);
-                glEnd();
+                shapeRenderer.rect(-s, -s / 3.0f, s * 2, (s / 3.0f) * 2);
+                shapeRenderer.rect(-s / 3.0f, -s, (s / 3.0f) * 2, s * 2);
                 break;
-
             case Star:
                 s = size * 1.35f;
-                glBegin(GL_TRIANGLE_FAN);
-                glVertex2f(0, 0);
-                for (int i = 0; i <= 10; i++) {
-                    float rad = (float) Math.toRadians(i * 36 - 90);
-                    float r = (i % 2 == 0) ? s : s / 2.4f;
-                    glVertex2f((float) Math.cos(rad) * r, (float) Math.sin(rad) * r);
-                }
-                glEnd();
-
-                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
-                glLineWidth(1.8f);
-                glBegin(GL_LINE_LOOP);
-                for (int i = 0; i < 10; i++) {
-                    float rad = (float) Math.toRadians(i * 36 - 90);
-                    float r = (i % 2 == 0) ? s : s / 2.4f;
-                    glVertex2f((float) Math.cos(rad) * r, (float) Math.sin(rad) * r);
-                }
-                glEnd();
+                drawStarFilled(10, s, s / 2.4f);
                 break;
-
             case Square:
             default:
                 s = size * 0.95f;
-                glBegin(GL_QUADS);
-                glVertex2f(-s, -s);
-                glVertex2f(s, -s);
-                glVertex2f(s, s);
-                glVertex2f(-s, s);
-                glEnd();
-
-                glColor4f(0.0f, 0.0f, 0.0f, fillColor[3]);
-                glLineWidth(1.8f);
-                glBegin(GL_LINE_LOOP);
-                glVertex2f(-s, -s); glVertex2f(s, -s); glVertex2f(s, s); glVertex2f(-s, s);
-                glEnd();
+                shapeRenderer.rect(-s, -s, s * 2, s * 2);
                 break;
         }
+        shapeRenderer.end();
 
-        glColor4f(fillColor[0], fillColor[1], fillColor[2], fillColor[3]);
-        glLineWidth(1.0f);
-        glPopMatrix();
-    }
-
-    private int loadTexture(String filepath) {
-        IntBuffer width = BufferUtils.createIntBuffer(1);
-        IntBuffer height = BufferUtils.createIntBuffer(1);
-        IntBuffer channels = BufferUtils.createIntBuffer(1);
-
-        stbi_set_flip_vertically_on_load(false);
-
-        ByteBuffer image = stbi_load(filepath, width, height, channels, 4);
-        if (image == null) {
-            throw new RuntimeException("Nie udało się wczytać pliku: " + filepath + "\n" + stbi_failure_reason());
+        Gdx.gl.glLineWidth(1.8f);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(0, 0, 0, 1);
+        switch (shape) {
+            case Triangle:
+                s = size * 1.1f;
+                shapeRenderer.polygon(new float[]{0, -s, -s, s, s, s});
+                break;
+            case Circle:
+                s = size * 1.05f;
+                shapeRenderer.circle(0, 0, s, 30);
+                break;
+            case Diamond:
+                s = size * 1.2f;
+                shapeRenderer.polygon(new float[]{0, -s, s, 0, 0, s, -s, 0});
+                break;
+            case Pentagon:
+                s = size * 1.15f;
+                drawRegularPolygonLine(5, s);
+                break;
+            case Hexagon:
+                s = size * 1.15f;
+                drawRegularPolygonLine(6, s);
+                break;
+            case Cross:
+                s = size * 1.1f;
+                shapeRenderer.polygon(new float[]{
+                        -s/3.0f, -s, s/3.0f, -s, s/3.0f, -s/3.0f, s, -s/3.0f,
+                        s, s/3.0f, s/3.0f, s/3.0f, s/3.0f, s, -s/3.0f, s,
+                        -s/3.0f, s/3.0f, -s, s/3.0f, -s, -s/3.0f, -s/3.0f, -s/3.0f
+                });
+                break;
+            case Star:
+                s = size * 1.35f;
+                drawStarLine(10, s, s / 2.4f);
+                break;
+            case Square:
+            default:
+                s = size * 0.95f;
+                shapeRenderer.polygon(new float[]{-s, -s, s, -s, s, s, -s, s});
+                break;
         }
+        shapeRenderer.end();
 
-        int textureID = glGenTextures();
-        glBindTexture(GL_TEXTURE_2D, textureID);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width.get(0), height.get(0), 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
-
-        stbi_image_free(image);
-        return textureID;
+        Gdx.gl.glLineWidth(1.0f);
+        shapeRenderer.setTransformMatrix(new Matrix4());
     }
 
-    private void handleMouseClick() {
+    private void drawRegularPolygonFilled(int sides, float radius) {
+        float[] v = new float[sides * 2];
+        for (int i = 0; i < sides; i++) {
+            float rad = (float) Math.toRadians(i * (360.0f / sides) - 90);
+            v[i * 2] = (float) Math.cos(rad) * radius;
+            v[i * 2 + 1] = (float) Math.sin(rad) * radius;
+        }
+        for (int i = 0; i < sides; i++) {
+            int next = (i + 1) % sides;
+            shapeRenderer.triangle(0, 0, v[i * 2], v[i * 2 + 1], v[next * 2], v[next * 2 + 1]);
+        }
+    }
+
+    private void drawRegularPolygonLine(int sides, float radius) {
+        float[] v = new float[sides * 2];
+        for (int i = 0; i < sides; i++) {
+            float rad = (float) Math.toRadians(i * (360.0f / sides) - 90);
+            v[i * 2] = (float) Math.cos(rad) * radius;
+            v[i * 2 + 1] = (float) Math.sin(rad) * radius;
+        }
+        shapeRenderer.polygon(v);
+    }
+
+    private void drawStarFilled(int points, float outerRadius, float innerRadius) {
+        float[] v = new float[points * 2];
+        for (int i = 0; i < points; i++) {
+            float rad = (float) Math.toRadians(i * (360.0f / points) - 90);
+            float r = (i % 2 == 0) ? outerRadius : innerRadius;
+            v[i * 2] = (float) Math.cos(rad) * r;
+            v[i * 2 + 1] = (float) Math.sin(rad) * r;
+        }
+        for (int i = 0; i < points; i++) {
+            int next = (i + 1) % points;
+            shapeRenderer.triangle(0, 0, v[i * 2], v[i * 2 + 1], v[next * 2], v[next * 2 + 1]);
+        }
+    }
+
+    private void drawStarLine(int points, float outerRadius, float innerRadius) {
+        float[] v = new float[points * 2];
+        for (int i = 0; i < points; i++) {
+            float rad = (float) Math.toRadians(i * (360.0f / points) - 90);
+            float r = (i % 2 == 0) ? outerRadius : innerRadius;
+            v[i * 2] = (float) Math.cos(rad) * r;
+            v[i * 2 + 1] = (float) Math.sin(rad) * r;
+        }
+        shapeRenderer.polygon(v);
+    }
+
+    private void handleMouseClick(float x, float y) {
         Airport clicked = null;
         float minDistance = 0.02f;
 
         for (Airport airport : presenter.getAirports()) {
-            float dx = airport.getPosition().getX() - (float) mouseX;
-            float dy = airport.getPosition().getY() - (float) mouseY;
+            float dx = airport.getPosition().getX() - x;
+            float dy = airport.getPosition().getY() - y;
             float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
             if (dist < minDistance) {
@@ -404,58 +371,29 @@ public class Window {
         currentRoute.clear();
     }
 
-    private void drawTempRoute() {
-        if (currentRoute.isEmpty()) return;
-
-        glColor4f(0.3f, 0.3f, 0.3f, 0.8f);
-        glLineWidth(4.0f);
-
-        glBegin(GL_LINE_STRIP);
-
-        for (Airport a : currentRoute)
-            glVertex2f(a.getPosition().getX(), a.getPosition().getY());
-
-        glVertex2d(mouseX, mouseY);
-
-        glEnd();
-        glLineWidth(1.0f);
-    }
-
-    private void drawLines() {
-        if (presenter.getLines() == null || presenter.getLines().isEmpty()) return;
-
-        glLineWidth(5.0f);
-
-        for (Line line : presenter.getLines()) {
-            if (line.size() < 2) continue;
-
-            setOpenGLColor(line.color);
-
-            glBegin(GL_LINE_STRIP);
-            for (int i = 0; i < line.size(); i++) {
-                Airport airport = line.get(i);
-                glVertex2f(airport.getPosition().getX(), airport.getPosition().getY());
-            }
-            glEnd();
-        }
-
-        glLineWidth(1.0f);
-    }
-
-    private void setOpenGLColor(Color color) {
+    private void setShapeRendererColor(Color color) {
         switch (color) {
             case Red:
-                glColor3f(0.8f, 0.2f, 0.2f);
+                shapeRenderer.setColor(0.8f, 0.2f, 0.2f, 1.0f);
                 break;
             case Green:
-                glColor3f(0.2f, 0.8f, 0.2f);
+                shapeRenderer.setColor(0.2f, 0.8f, 0.2f, 1.0f);
                 break;
             case Blue:
-                glColor3f(0.2f, 0.2f, 0.8f);
+                shapeRenderer.setColor(0.2f, 0.2f, 0.8f, 1.0f);
                 break;
+            case Black:
             default:
-                glColor3f(0.0f, 0.0f, 0.0f);
+                shapeRenderer.setColor(0.0f, 0.0f, 0.0f, 1.0f);
                 break;
         }
+    }
+
+    @Override
+    public void dispose() {
+        batch.dispose();
+        shapeRenderer.dispose();
+        backgroundTexture.dispose();
+        airplaneTexture.dispose();
     }
 }

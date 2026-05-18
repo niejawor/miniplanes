@@ -24,6 +24,14 @@ public class Airplane {
         this.type = type;
     }
 
+    public Airport getDestination() {
+        return line.get(idx);
+    }
+
+    public AirplaneType getType() {
+        return type;
+    }
+
     public boolean isFlyingForward() {
         return flyingForward;
     }
@@ -116,5 +124,9 @@ public class Airplane {
 
     public void startLandingProcedure() {
         timeSpent = 0;
+    }
+
+    public boolean isCurrentlyFlying() {
+        return currentlyFlying;
     }
 }
