@@ -111,10 +111,19 @@ public class Window extends ApplicationAdapter {
     private void drawAirplanes() {
         if (presenter.getAirplanes() == null) return;
 
+        float screenWidth = Gdx.graphics.getWidth();
+        float screenHeight = Gdx.graphics.getHeight();
+        float screenAspect = screenWidth / screenHeight;
+        float textureAspect = (float) airplaneTexture.getWidth() / airplaneTexture.getHeight();
+
+        Matrix4 transform = new Matrix4();
+        transform.scale(1.0f, screenAspect, 1.0f);
+        batch.setTransformMatrix(transform);
+
         for (Airplane plane : presenter.getAirplanes()) {
             float x = plane.getPosition().getX();
             float y = plane.getPosition().getY();
-            float scale = plane.getType() == AirplaneType.SmallAirplane ? 0.015f : 0.01f;
+            float scale = plane.getType() == AirplaneType.SmallAirplane ? 0.02f : 0.015f;
 
             float angle = 0f;
             if (plane.isCurrentlyFlying()) {
@@ -124,16 +133,20 @@ public class Window extends ApplicationAdapter {
                 float dx = destX - x;
                 float dy = destY - y;
 
-                angle = (float) Math.toDegrees(Math.atan2(dy, dx));
+                angle = (float) Math.toDegrees(Math.atan2(dy * (screenHeight / screenWidth), dx));
             }
 
-            float width = scale * 2;
-            float height = scale * 2;
-            float originX = scale;
-            float originY = scale;
+            float height = (scale * 2) / screenAspect;
+            float width = height * textureAspect;
+            float originX = width / 2f;
+            float originY = height / 2f;
+            float drawX = x - originX;
+            float drawY = (y / screenAspect) - originY;
 
-            batch.draw(airplaneTexture, x - scale, y - scale, originX, originY, width, height, 1.0f, 1.0f, angle,0, 0, airplaneTexture.getWidth(), airplaneTexture.getHeight(),false, true);
+            batch.draw(airplaneTexture, drawX, drawY, originX, originY, width, height, 1.0f, 1.0f, angle,0, 0, airplaneTexture.getWidth(), airplaneTexture.getHeight(),false, true);
         }
+
+        batch.setTransformMatrix(new Matrix4());
     }
 
     private void drawAirportDetails(Airport airport) {
@@ -203,7 +216,7 @@ public class Window extends ApplicationAdapter {
     private void drawSingleShape(Shape shape, float x, float y, float size, Color color) {
         Matrix4 transform = new Matrix4();
         transform.setToTranslation(x, y, 0);
-        transform.scale(1.0f, 16.0f / 9.0f, 1.0f);
+        transform.scale(1.0f, (float) Gdx.graphics.getWidth() / Gdx.graphics.getHeight(), 1.0f);
         shapeRenderer.setTransformMatrix(transform);
 
         float s;
