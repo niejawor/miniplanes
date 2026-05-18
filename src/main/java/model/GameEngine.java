@@ -54,12 +54,6 @@ public class GameEngine {
         return next;
     }
 
-    public void addLine(Line line) {
-        lines.add(line);
-        Airplane a = new Airplane(line, AirplaneType.SmallAirplane);
-        airplanes.add(a);
-        line.get(0).airplaneReportsToLanding(a);
-    }
 
     public void add_event(Event e){
         events.add(e);
@@ -127,7 +121,7 @@ public class GameEngine {
 
     public void Simulate(){
         isRunning = new AtomicBoolean(true);
-
+        //gameOver.set(false);
         while(true){
             if(gameOver.get()){
                 break;
@@ -139,7 +133,7 @@ public class GameEngine {
             if(!isRunning.get()){
                 if(System.nanoTime() - start_time < OPTIMAL_TIME){
                     try{
-                        long time_left = System.nanoTime() - start_time;
+                        long time_left = OPTIMAL_TIME - (System.nanoTime() - start_time);
                         long millis = time_left / 1000000;
                         int nanos = (int) (time_left % 1000000);
                         Thread.sleep(millis, nanos);
@@ -199,7 +193,7 @@ public class GameEngine {
 
             if(System.nanoTime() - start_time < OPTIMAL_TIME){
                 try{
-                    long time_left = System.nanoTime() - start_time;
+                    long time_left = OPTIMAL_TIME - (System.nanoTime() - start_time);
                     long millis = time_left / 1000000;
                     int nanos = (int) (time_left % 1000000);
                     Thread.sleep(millis, nanos);

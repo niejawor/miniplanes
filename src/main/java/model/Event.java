@@ -20,11 +20,11 @@ public interface Event {
 
         @Override
         public boolean handle_event() {
-            if(engine.get_number_of_available_lines() == 0 || engine.get_number_of_available_airplanes() == 0){
-                return false;
-            }
-            engine.decrement_number_of_available_lines();
-            engine.decrement_number_of_available_airplanes();
+//            if(engine.get_number_of_available_lines() == 0 || engine.get_number_of_available_airplanes() == 0){
+//                return false;
+//            }
+//            engine.decrement_number_of_available_lines();
+//            engine.decrement_number_of_available_airplanes();
 
             Line newLine = new Line(route.get(0), route.get(1));
 
