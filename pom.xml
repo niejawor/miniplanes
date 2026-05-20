@@ -6,34 +6,23 @@
   <version>1.0-SNAPSHOT</version>
 
   <properties>
-    <!-- Zmiana na stabilną i dostępną wersję LibGDX -->
-    <gdx.version>1.12.1</gdx.version>
+    <javafx.version>21.0.2</javafx.version>
     <maven.compiler.source>25</maven.compiler.source>
     <maven.compiler.target>25</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <dependencies>
-    <!-- Rdzeń LibGDX -->
     <dependency>
-      <groupId>com.badlogicgames.gdx</groupId>
-      <artifactId>gdx</artifactId>
-      <version>${gdx.version}</version>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>${javafx.version}</version>
     </dependency>
 
-    <!-- Backend LWJGL3 dla Desktopu -->
     <dependency>
-      <groupId>com.badlogicgames.gdx</groupId>
-      <artifactId>gdx-backend-lwjgl3</artifactId>
-      <version>${gdx.version}</version>
-    </dependency>
-
-    <!-- KLUCZOWY DODATEK: Pliki natywne (w tym gdx64.dll) dla platform desktopowych -->
-    <dependency>
-      <groupId>com.badlogicgames.gdx</groupId>
-      <artifactId>gdx-platform</artifactId>
-      <version>${gdx.version}</version>
-      <classifier>natives-desktop</classifier>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-graphics</artifactId>
+      <version>${javafx.version}</version>
     </dependency>
   </dependencies>
 
@@ -46,6 +35,15 @@
         <configuration>
           <source>${maven.compiler.source}</source>
           <target>${maven.compiler.target}</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-maven-plugin</artifactId>
+        <version>0.0.8</version>
+        <configuration>
+          <mainClass>mainapplication.Main</mainClass>
         </configuration>
       </plugin>
     </plugins>
