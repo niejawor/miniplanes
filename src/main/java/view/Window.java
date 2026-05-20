@@ -1,105 +1,95 @@
 package view;
 
-import com.badlogic.gdx.ApplicationAdapter;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Vector3;
+import javafx.animation.AnimationTimer;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.StrokeLineCap;
+import javafx.scene.shape.StrokeLineJoin;
 import model.*;
 import viewmodel.GamePresenter;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Window extends ApplicationAdapter {
+public class Window extends Pane {
     private final GamePresenter presenter;
-    private SpriteBatch batch;
-    private ShapeRenderer shapeRenderer;
-    private OrthographicCamera camera;
-    private Texture backgroundTexture;
-    private Texture airplaneTexture;
+    private final Canvas canvas;
+    private final GraphicsContext gc;
+    private final Image backgroundTexture;
+    private final Image airplaneTexture;
 
     private final List<Airport> currentRoute = new ArrayList<>();
-    private final Vector3 mousePos = new Vector3();
+    private double mouseX = 0;
+    private double mouseY = 0;
 
     public Window(GamePresenter presenter) {
         this.presenter = presenter;
-    }
+        this.canvas = new Canvas(1440, 810);
+        this.gc = canvas.getGraphicsContext2D();
 
-    @Override
-    public void create() {
-        batch = new SpriteBatch();
-        shapeRenderer = new ShapeRenderer();
+        getChildren().add(canvas);
 
-        camera = new OrthographicCamera();
-        camera.setToOrtho(true, 1.0f, 1.0f);
+        this.backgroundTexture = new Image(new File("src/assets/mapa.png").toURI().toString());
+        this.airplaneTexture = new Image(new File("src/assets/airplane2.png").toURI().toString());
 
-        backgroundTexture = new Texture(Gdx.files.local("src/assets/mapa.png"));
-        airplaneTexture = new Texture(Gdx.files.local("src/assets/airplane2.png"));
+        setFocusTraversable(true);
 
-        Gdx.input.setInputProcessor(new InputAdapter() {
-           @Override
-            public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-               camera.unproject(mousePos.set(screenX, screenY, 0));
-               if (button == Input.Buttons.LEFT)
-                   handleMouseClick(mousePos.x, mousePos.y);
-               else if (button == Input.Buttons.RIGHT)
-                   currentRoute.clear();
-               return true;
-           }
+        setOnMousePressed(e -> {
+            mouseX = e.getX() / canvas.getWidth();
+            mouseY = e.getY() / canvas.getHeight();
 
-           @Override
-           public boolean keyDown(int keycode) {
-               if (keycode == Input.Keys.ENTER)
-                   handleEnterPress();
-               else if (keycode == Input.Keys.ESCAPE)
-                   currentRoute.clear();
-               return true;
-           }
-
-           @Override
-           public boolean mouseMoved(int screenX, int screenY) {
-               camera.unproject(mousePos.set(screenX, screenY, 0));
-               return true;
-           }
+            if (e.getButton() == MouseButton.PRIMARY) {
+                handleMouseClick((float) mouseX, (float) mouseY);
+            } else if (e.getButton() == MouseButton.SECONDARY) {
+                currentRoute.clear();
+            }
         });
+
+        setOnMouseMoved(e -> {
+            mouseX = e.getX() / canvas.getWidth();
+            mouseY = e.getY() / canvas.getHeight();
+        });
+
+        setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                handleEnterPress();
+            } else if (e.getCode() == KeyCode.ESCAPE) {
+                currentRoute.clear();
+            }
+        });
+
+        AnimationTimer timer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                render();
+            }
+        };
+        timer.start();
     }
 
     public void render() {
-        Gdx.gl.glClearColor(1, 1, 1, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+        double width = canvas.getWidth();
+        double height = canvas.getHeight();
 
-        camera.update();
-        batch.setProjectionMatrix(camera.combined);
-        shapeRenderer.setProjectionMatrix(camera.combined);
+        gc.clearRect(0, 0, width, height);
 
-        batch.begin();
-        batch.draw(backgroundTexture, 0, 0, 1, 1, 0, 0, backgroundTexture.getWidth(), backgroundTexture.getHeight(), false, true);
-        batch.end();
-
-        Gdx.gl.glEnable(GL20.GL_BLEND);
-        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        gc.drawImage(backgroundTexture, 0, 0, width, height);
 
         drawTempRoute();
         drawLines();
         drawAirports();
-
-        batch.begin();
         drawAirplanes();
-        batch.end();
-
-        Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
     private void drawAirports() {
         float size = 0.008f;
-        Color color = Color.Red;
+        model.Color color = model.Color.Red;
         for (Airport airport : presenter.getAirports()) {
             float x = airport.getPosition().getX();
             float y = airport.getPosition().getY();
@@ -111,14 +101,13 @@ public class Window extends ApplicationAdapter {
     private void drawAirplanes() {
         if (presenter.getAirplanes() == null) return;
 
-        float screenWidth = Gdx.graphics.getWidth();
-        float screenHeight = Gdx.graphics.getHeight();
-        float screenAspect = screenWidth / screenHeight;
-        float textureAspect = (float) airplaneTexture.getWidth() / airplaneTexture.getHeight();
+        double width = canvas.getWidth();
+        double height = canvas.getHeight();
+        double screenAspect = width / height;
 
-        Matrix4 transform = new Matrix4();
-        transform.scale(1.0f, screenAspect, 1.0f);
-        batch.setTransformMatrix(transform);
+        double texWidth = airplaneTexture.getWidth();
+        double texHeight = airplaneTexture.getHeight();
+        double textureAspect = texWidth / texHeight;
 
         for (Airplane plane : presenter.getAirplanes()) {
             float x = plane.getPosition().getX();
@@ -133,20 +122,22 @@ public class Window extends ApplicationAdapter {
                 float dx = destX - x;
                 float dy = destY - y;
 
-                angle = (float) Math.toDegrees(Math.atan2(dy * (screenHeight / screenWidth), dx));
+                angle = (float) Math.toDegrees(Math.atan2(dy * (height / width), dx));
             }
 
-            float height = (scale * 2) / screenAspect;
-            float width = height * textureAspect;
-            float originX = width / 2f;
-            float originY = height / 2f;
-            float drawX = x - originX;
-            float drawY = (y / screenAspect) - originY;
+            double planeHeight = (scale * 2) / screenAspect;
+            double planeWidth = planeHeight * textureAspect;
 
-            batch.draw(airplaneTexture, drawX, drawY, originX, originY, width, height, 1.0f, 1.0f, angle,0, 0, airplaneTexture.getWidth(), airplaneTexture.getHeight(),false, true);
+            gc.save();
+            gc.translate(x * width, y * height);
+            gc.rotate(angle);
+
+            double drawWidth = planeWidth * width;
+            double drawHeight = planeHeight * width;
+
+            gc.drawImage(airplaneTexture, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+            gc.restore();
         }
-
-        batch.setTransformMatrix(new Matrix4());
     }
 
     private void drawAirportDetails(Airport airport) {
@@ -156,9 +147,9 @@ public class Window extends ApplicationAdapter {
         int passCount = 0;
         int maxPassengersToShow = 10;
 
-        Color normalColor = Color.Blue;
-        Color overloadColor = Color.Black;
-        Color color = normalColor;
+        model.Color normalColor = model.Color.Blue;
+        model.Color overloadColor = model.Color.Black;
+        model.Color color = normalColor;
 
         for (Passenger p : airport.getPassengers()) {
             if (passCount >= maxPassengersToShow) break;
@@ -174,189 +165,145 @@ public class Window extends ApplicationAdapter {
     private void drawTempRoute() {
         if (currentRoute.isEmpty()) return;
 
-        Gdx.gl.glLineWidth(4.0f);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(0.3f, 0.3f, 0.3f, 0.8f);
+        gc.setLineWidth(4.0);
+        gc.setStroke(Color.color(0.3, 0.3, 0.3, 0.8));
 
-        for (int i = 0; i < currentRoute.size() - 1; i++) {
-            Airport a1 = currentRoute.get(i);
-            Airport a2 = currentRoute.get(i + 1);
-            shapeRenderer.line(a1.getPosition().getX(), a1.getPosition().getY(), a2.getPosition().getX(), a2.getPosition().getY());
+        gc.setLineCap(StrokeLineCap.ROUND);
+        gc.setLineJoin(StrokeLineJoin.ROUND);
+
+        double w = canvas.getWidth();
+        double h = canvas.getHeight();
+
+        gc.beginPath();
+        Airport first = currentRoute.get(0);
+        gc.moveTo(first.getPosition().getX() * w, first.getPosition().getY() * h);
+
+        for (int i = 1; i < currentRoute.size(); i++) {
+            Airport a = currentRoute.get(i);
+            gc.lineTo(a.getPosition().getX() * w, a.getPosition().getY() * h);
         }
-
-        Airport last = currentRoute.get(currentRoute.size() - 1);
-        shapeRenderer.line(last.getPosition().getX(), last.getPosition().getY(), mousePos.x, mousePos.y);
-
-        shapeRenderer.end();
-        Gdx.gl.glLineWidth(1.0f);
+        gc.lineTo(mouseX * w, mouseY * h);
+        gc.stroke();
+        gc.setLineWidth(1.0);
+        gc.setLineCap(StrokeLineCap.SQUARE);
+        gc.setLineJoin(StrokeLineJoin.MITER);
     }
 
     private void drawLines() {
         if (presenter.getLines() == null || presenter.getLines().isEmpty()) return;
 
-        Gdx.gl.glLineWidth(5.0f);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        gc.setLineWidth(5.0);
+        gc.setLineCap(StrokeLineCap.ROUND);
+        gc.setLineJoin(StrokeLineJoin.ROUND);
+
+        double w = canvas.getWidth();
+        double h = canvas.getHeight();
 
         for (Line line : presenter.getLines()) {
             if (line.size() < 2) continue;
-            setShapeRendererColor(line.color);
 
-            for (int i = 0; i < line.size() - 1; i++) {
-                Airport a1 = line.get(i);
-                Airport a2 = line.get(i + 1);
-                shapeRenderer.line(a1.getPosition().getX(), a1.getPosition().getY(), a2.getPosition().getX(), a2.getPosition().getY());
+            gc.setStroke(mapModelColor(line.color));
+            gc.beginPath();
+
+            Airport first = line.get(0);
+            gc.moveTo(first.getPosition().getX() * w, first.getPosition().getY() * h);
+
+            for (int i = 1; i < line.size(); i++) {
+                Airport a = line.get(i);
+                gc.lineTo(a.getPosition().getX() * w, a.getPosition().getY() * h);
             }
-
+            gc.stroke();
         }
-
-        shapeRenderer.end();
-        Gdx.gl.glLineWidth(1.0f);
+        gc.setLineWidth(1.0);
+        gc.setLineCap(StrokeLineCap.SQUARE);
+        gc.setLineJoin(StrokeLineJoin.MITER);
     }
 
-    private void drawSingleShape(Shape shape, float x, float y, float size, Color color) {
-        Matrix4 transform = new Matrix4();
-        transform.setToTranslation(x, y, 0);
-        transform.scale(1.0f, (float) Gdx.graphics.getWidth() / Gdx.graphics.getHeight(), 1.0f);
-        shapeRenderer.setTransformMatrix(transform);
+    private void drawSingleShape(Shape shape, float x, float y, float size, model.Color color) {
+        double w = canvas.getWidth();
+        double h = canvas.getHeight();
+
+        gc.save();
+
+        gc.translate(x * w, y * h);
+        gc.scale(w, w);
 
         float s;
 
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        setShapeRendererColor(color);
+        gc.setFill(mapModelColor(color));
+        gc.setStroke(Color.BLACK);
+        gc.setLineWidth(1.8 / w);
 
         switch (shape) {
             case Triangle:
                 s = size * 1.1f;
-                shapeRenderer.triangle(0, -s, -s, s, s, s);
+                gc.fillPolygon(new double[]{0, -s, s}, new double[]{-s, s, s}, 3);
+                gc.strokePolygon(new double[]{0, -s, s}, new double[]{-s, s, s}, 3);
                 break;
             case Circle:
                 s = size * 1.05f;
-                shapeRenderer.circle(0, 0, s, 30);
+                gc.fillOval(-s, -s, s * 2, s * 2);
+                gc.strokeOval(-s, -s, s * 2, s * 2);
                 break;
             case Diamond:
                 s = size * 1.2f;
-                shapeRenderer.triangle(0, -s, s, 0, -s, 0);
-                shapeRenderer.triangle(-s, 0, s, 0, 0, s);
+                gc.fillPolygon(new double[]{0, s, 0, -s}, new double[]{-s, 0, s, 0}, 4);
+                gc.strokePolygon(new double[]{0, s, 0, -s}, new double[]{-s, 0, s, 0}, 4);
                 break;
             case Pentagon:
                 s = size * 1.15f;
-                drawRegularPolygonFilled(5, s);
+                drawRegularPolygon(5, s);
                 break;
             case Hexagon:
                 s = size * 1.15f;
-                drawRegularPolygonFilled(6, s);
+                drawRegularPolygon(6, s);
                 break;
             case Cross:
                 s = size * 1.1f;
-                shapeRenderer.rect(-s, -s / 3.0f, s * 2, (s / 3.0f) * 2);
-                shapeRenderer.rect(-s / 3.0f, -s, (s / 3.0f) * 2, s * 2);
+                double third = s / 3.0;
+                double[] xCross = {-third, third, third, s, s, third, third, -third, -third, -s, -s, -third};
+                double[] yCross = {-s, -s, -third, -third, third, third, s, s, third, third, -third, -third};
+                gc.fillPolygon(xCross, yCross, 12);
+                gc.strokePolygon(xCross, yCross, 12);
                 break;
             case Star:
                 s = size * 1.35f;
-                drawStarFilled(10, s, s / 2.4f);
+                drawStar(10, s, s / 2.4f);
                 break;
             case Square:
             default:
                 s = size * 0.95f;
-                shapeRenderer.rect(-s, -s, s * 2, s * 2);
+                gc.fillRect(-s, -s, s * 2, s * 2);
+                gc.strokeRect(-s, -s, s * 2, s * 2);
                 break;
         }
-        shapeRenderer.end();
 
-        Gdx.gl.glLineWidth(1.8f);
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-        shapeRenderer.setColor(0, 0, 0, 1);
-        switch (shape) {
-            case Triangle:
-                s = size * 1.1f;
-                shapeRenderer.polygon(new float[]{0, -s, -s, s, s, s});
-                break;
-            case Circle:
-                s = size * 1.05f;
-                shapeRenderer.circle(0, 0, s, 30);
-                break;
-            case Diamond:
-                s = size * 1.2f;
-                shapeRenderer.polygon(new float[]{0, -s, s, 0, 0, s, -s, 0});
-                break;
-            case Pentagon:
-                s = size * 1.15f;
-                drawRegularPolygonLine(5, s);
-                break;
-            case Hexagon:
-                s = size * 1.15f;
-                drawRegularPolygonLine(6, s);
-                break;
-            case Cross:
-                s = size * 1.1f;
-                shapeRenderer.polygon(new float[]{
-                        -s/3.0f, -s, s/3.0f, -s, s/3.0f, -s/3.0f, s, -s/3.0f,
-                        s, s/3.0f, s/3.0f, s/3.0f, s/3.0f, s, -s/3.0f, s,
-                        -s/3.0f, s/3.0f, -s, s/3.0f, -s, -s/3.0f, -s/3.0f, -s/3.0f
-                });
-                break;
-            case Star:
-                s = size * 1.35f;
-                drawStarLine(10, s, s / 2.4f);
-                break;
-            case Square:
-            default:
-                s = size * 0.95f;
-                shapeRenderer.polygon(new float[]{-s, -s, s, -s, s, s, -s, s});
-                break;
-        }
-        shapeRenderer.end();
-
-        Gdx.gl.glLineWidth(1.0f);
-        shapeRenderer.setTransformMatrix(new Matrix4());
+        gc.restore();
     }
 
-    private void drawRegularPolygonFilled(int sides, float radius) {
-        float[] v = new float[sides * 2];
+    private void drawRegularPolygon(int sides, float radius) {
+        double[] xPoints = new double[sides];
+        double[] yPoints = new double[sides];
         for (int i = 0; i < sides; i++) {
-            float rad = (float) Math.toRadians(i * (360.0f / sides) - 90);
-            v[i * 2] = (float) Math.cos(rad) * radius;
-            v[i * 2 + 1] = (float) Math.sin(rad) * radius;
+            double rad = Math.toRadians(i * (360.0 / sides) - 90);
+            xPoints[i] = Math.cos(rad) * radius;
+            yPoints[i] = Math.sin(rad) * radius;
         }
-        for (int i = 0; i < sides; i++) {
-            int next = (i + 1) % sides;
-            shapeRenderer.triangle(0, 0, v[i * 2], v[i * 2 + 1], v[next * 2], v[next * 2 + 1]);
-        }
+        gc.fillPolygon(xPoints, yPoints, sides);
+        gc.strokePolygon(xPoints, yPoints, sides);
     }
 
-    private void drawRegularPolygonLine(int sides, float radius) {
-        float[] v = new float[sides * 2];
-        for (int i = 0; i < sides; i++) {
-            float rad = (float) Math.toRadians(i * (360.0f / sides) - 90);
-            v[i * 2] = (float) Math.cos(rad) * radius;
-            v[i * 2 + 1] = (float) Math.sin(rad) * radius;
-        }
-        shapeRenderer.polygon(v);
-    }
-
-    private void drawStarFilled(int points, float outerRadius, float innerRadius) {
-        float[] v = new float[points * 2];
+    private void drawStar(int points, float outerRadius, float innerRadius) {
+        double[] xPoints = new double[points];
+        double[] yPoints = new double[points];
         for (int i = 0; i < points; i++) {
-            float rad = (float) Math.toRadians(i * (360.0f / points) - 90);
-            float r = (i % 2 == 0) ? outerRadius : innerRadius;
-            v[i * 2] = (float) Math.cos(rad) * r;
-            v[i * 2 + 1] = (float) Math.sin(rad) * r;
+            double rad = Math.toRadians(i * (360.0 / points) - 90);
+            double r = (i % 2 == 0) ? outerRadius : innerRadius;
+            xPoints[i] = Math.cos(rad) * r;
+            yPoints[i] = Math.sin(rad) * r;
         }
-        for (int i = 0; i < points; i++) {
-            int next = (i + 1) % points;
-            shapeRenderer.triangle(0, 0, v[i * 2], v[i * 2 + 1], v[next * 2], v[next * 2 + 1]);
-        }
-    }
-
-    private void drawStarLine(int points, float outerRadius, float innerRadius) {
-        float[] v = new float[points * 2];
-        for (int i = 0; i < points; i++) {
-            float rad = (float) Math.toRadians(i * (360.0f / points) - 90);
-            float r = (i % 2 == 0) ? outerRadius : innerRadius;
-            v[i * 2] = (float) Math.cos(rad) * r;
-            v[i * 2 + 1] = (float) Math.sin(rad) * r;
-        }
-        shapeRenderer.polygon(v);
+        gc.fillPolygon(xPoints, yPoints, points);
+        gc.strokePolygon(xPoints, yPoints, points);
     }
 
     private void handleMouseClick(float x, float y) {
@@ -384,29 +331,13 @@ public class Window extends ApplicationAdapter {
         currentRoute.clear();
     }
 
-    private void setShapeRendererColor(Color color) {
-        switch (color) {
-            case Red:
-                shapeRenderer.setColor(0.8f, 0.2f, 0.2f, 1.0f);
-                break;
-            case Green:
-                shapeRenderer.setColor(0.2f, 0.8f, 0.2f, 1.0f);
-                break;
-            case Blue:
-                shapeRenderer.setColor(0.2f, 0.2f, 0.8f, 1.0f);
-                break;
+    private Color mapModelColor(model.Color modelColor) {
+        switch (modelColor) {
+            case Red: return Color.color(0.8, 0.2, 0.2);
+            case Green: return Color.color(0.2, 0.8, 0.2);
+            case Blue: return Color.color(0.2, 0.2, 0.8);
             case Black:
-            default:
-                shapeRenderer.setColor(0.0f, 0.0f, 0.0f, 1.0f);
-                break;
+            default: return Color.BLACK;
         }
-    }
-
-    @Override
-    public void dispose() {
-        batch.dispose();
-        shapeRenderer.dispose();
-        backgroundTexture.dispose();
-        airplaneTexture.dispose();
     }
 }
