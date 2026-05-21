@@ -41,8 +41,12 @@ public class AirportSupplier implements Supplier<Airport> {
     @Override
     public Airport get(){
         if (unused.isEmpty()) throw new IllegalStateException("Wszystkie lotniska wyczerpane");
-
         if (prevDel == null){
+            int idx = new Random().nextInt(unused.size());
+            for (int i = 0; i < idx; ++i) {
+                prevDel = unused.removeFirst();
+                unused.addLast(prevDel);
+            }
             initialize(prevDel = unused.removeFirst());
             return prevDel;
         }
