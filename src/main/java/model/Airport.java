@@ -131,7 +131,8 @@ public class Airport {
         AirplaneEntry entry;
         while (it.hasNext()) {
             if ((entry=it.next()).airplane.getTimeSpent() >= type.timeSpentTakingOff) {
-                entry.airplane.startNextJourney();
+                if (entry.airplane.isValid()) entry.airplane.startNextJourney();
+                else gameEngine.getAirplanes().remove(entry.airplane);
                 startingAirplanes.remove(entry);
                 //it.remove();
             }

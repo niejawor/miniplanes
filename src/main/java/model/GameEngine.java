@@ -1,7 +1,5 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -23,7 +21,7 @@ public class GameEngine {
     private final Queue<Event> events = new ConcurrentLinkedQueue<>();
 
     private AtomicInteger number_of_available_lines;
-    private AtomicInteger number_of_available_airplanes;
+    private AtomicInteger numberOfAvailableAirplanes;
 
     private final int limit_of_lines = 7;
 
@@ -43,7 +41,7 @@ public class GameEngine {
         current_tick = new AtomicInteger(0);
         total_transported_passengers = new AtomicInteger(0);
         number_of_available_lines = new AtomicInteger(5); // 3
-        number_of_available_airplanes = new AtomicInteger(5); // 3
+        numberOfAvailableAirplanes = new AtomicInteger(5); // 3
         isRunning = new AtomicBoolean(true);
         gameOver = new AtomicBoolean(false);
     }
@@ -63,15 +61,15 @@ public class GameEngine {
         return current_tick.get();
     }
 
-    public List<Airport> get_airports(){
+    public List<Airport> getAirports(){
         return airports;
     }
 
-    public List<Airplane> get_airplanes(){
+    public List<Airplane> getAirplanes(){
         return airplanes;
     }
 
-    public List<Line> get_lines(){
+    public List<Line> getLines(){
         return lines;
     }
 
@@ -88,8 +86,8 @@ public class GameEngine {
         return number_of_available_lines.get();
     }
 
-    public int get_number_of_available_airplanes(){
-        return number_of_available_airplanes.get();
+    public int getNumberOfAvailableAirplanes(){
+        return numberOfAvailableAirplanes.get();
     }
 
     public boolean is_running(){
@@ -114,8 +112,8 @@ public class GameEngine {
         number_of_available_lines.decrementAndGet();
     }
 
-    public void decrement_number_of_available_airplanes(){
-        number_of_available_airplanes.decrementAndGet();
+    public void decrementNumberOfAvailableAirplanes(){
+        numberOfAvailableAirplanes.decrementAndGet();
     }
 
 
@@ -148,7 +146,7 @@ public class GameEngine {
 
             while(!events.isEmpty()){
                 Event event = events.poll();
-                event.handle_event();
+                event.handleEvent();
             }
             final int get_tick = current_tick.get();
 
@@ -157,7 +155,7 @@ public class GameEngine {
                 if (number_of_available_lines.get() < limit_of_lines) {
                     number_of_available_lines.getAndIncrement();
                 }
-                number_of_available_airplanes.getAndIncrement();
+                numberOfAvailableAirplanes.getAndIncrement();
             }
 
             //wysylam update do samolotow i lotnisk ile czasu minelo - w tickach
@@ -202,7 +200,7 @@ public class GameEngine {
             }
 
             //do kolejnego ticka
-            current_tick.addAndGet(1);
+            current_tick.incrementAndGet();
 
         }
     }

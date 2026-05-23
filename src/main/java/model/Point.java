@@ -1,7 +1,7 @@
 package model;
 
 /*
-    Propozycja: niech klasa Airport (i inne, które muszą mieć lokalizację) rozszerzają Point, bo czemu nie
+
  */
 
 public final class Point {

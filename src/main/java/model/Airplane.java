@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Airplane {
-    Line line;
+    final Line line;
     int idx = 0;
     private boolean flyingForward = true;
-
+    private boolean valid = true;
     private boolean currentlyFlying = false;
     private Point position;
 
@@ -99,9 +99,9 @@ public class Airplane {
         if (flyingForward) idx++;
         else idx--;
 
-        if (idx == -1 || idx == line.size()) {
+        if (idx <= -1 || idx >= line.size()) {
             flyingForward = !flyingForward;
-            if (idx == -1) idx = 0;
+            if (idx <= -1) idx = 0;
             else idx = line.size() - 1;
         }
     }
@@ -129,4 +129,8 @@ public class Airplane {
     public boolean isCurrentlyFlying() {
         return currentlyFlying;
     }
+
+    public void setInvalid() { valid = false; }
+
+    public boolean isValid() { return valid; }
 }
