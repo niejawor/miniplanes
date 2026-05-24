@@ -1,59 +1,50 @@
 package view;
 
+import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeLineJoin;
 import model.Airport;
 import model.Line;
-
-import java.util.List;
+import viewmodel.GamePresenter;
 
 public class LineRenderer {
-    public void drawTempRoute(GraphicsContext gc, List<Airport> currentRoute, double w, double h, double mouseX, double mouseY) {
-        if (currentRoute.isEmpty()) return;
+    private final GamePresenter presenter;
 
-        gc.setLineWidth(4.0);
-        gc.setStroke(Color.color(0.3, 0.3, 0.3, 0.8));
-
-        gc.setLineCap(StrokeLineCap.ROUND);
-        gc.setLineJoin(StrokeLineJoin.ROUND);
-
-        gc.beginPath();
-        Airport first = currentRoute.get(0);
-        gc.moveTo(first.getPosition().getX() * w, first.getPosition().getY() * h);
-
-        for (int i = 1; i < currentRoute.size(); i++) {
-            Airport a = currentRoute.get(i);
-            gc.lineTo(a.getPosition().getX() * w, a.getPosition().getY() * h);
-        }
-        gc.lineTo(mouseX * w, mouseY * h);
-        gc.stroke();
-        gc.setLineWidth(1.0);
-        gc.setLineCap(StrokeLineCap.SQUARE);
-        gc.setLineJoin(StrokeLineJoin.MITER);
+    public LineRenderer(GamePresenter presenter) {
+        this.presenter = presenter;
     }
 
-    public void drawLines(GraphicsContext gc, List<Line> lines, double w, double h) {
+    public void drawLines(GraphicsContext gc, Canvas canvas) {
+        if (presenter.getLines() == null || presenter.getLines().isEmpty()) {
+            return;
+        }
+
         gc.setLineWidth(5.0);
         gc.setLineCap(StrokeLineCap.ROUND);
         gc.setLineJoin(StrokeLineJoin.ROUND);
 
-        for (Line line : lines) {
-            if (line.size() < 2) continue;
+        double w = canvas.getWidth();
+        double h = canvas.getHeight();
 
-            gc.setStroke(JavaFxColorMapper.mapModelColor(line.color));
+        for (Line line : presenter.getLines()) {
+            if (line.size() < 2) {
+                continue;
+            }
+
+            gc.setStroke(ColorMapper.mapModelColor(line.color));
             gc.beginPath();
 
             Airport first = line.get(0);
             gc.moveTo(first.getPosition().getX() * w, first.getPosition().getY() * h);
 
             for (int i = 1; i < line.size(); i++) {
-                Airport a = line.get(i);
-                gc.lineTo(a.getPosition().getX() * w, a.getPosition().getY() * h);
+                Airport airport = line.get(i);
+                gc.lineTo(airport.getPosition().getX() * w, airport.getPosition().getY() * h);
             }
             gc.stroke();
         }
+
         gc.setLineWidth(1.0);
         gc.setLineCap(StrokeLineCap.SQUARE);
         gc.setLineJoin(StrokeLineJoin.MITER);
