@@ -13,7 +13,7 @@ public class ShapeDrawer {
 
         float s;
 
-        gc.setFill(JavaFxColorMapper.mapModelColor(color));
+        gc.setFill(JavaFXColorMapper.mapModelColor(color));
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(1.8 / w);
 

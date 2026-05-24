@@ -1,6 +1,7 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -15,7 +16,7 @@ public class Airplane {
 
     AirplaneType type;
 
-    private final List<Passenger> passengersOnBoard = new CopyOnWriteArrayList<>();;
+    private final List<Passenger> passengersOnBoard = new CopyOnWriteArrayList<>();
     private float timeSpent = 0;
 
     Airplane(Line line, AirplaneType type) {
@@ -37,31 +38,19 @@ public class Airplane {
     }
 
     public List<Passenger> getPassengersOnBoard() {
-        return passengersOnBoard;
+        return Collections.unmodifiableList(passengersOnBoard);
     }
 
     public void unloadPassengers() {
-        Iterator<Passenger> it = passengersOnBoard.iterator();
-        Passenger p;
-        while (it.hasNext()) {
-            if (!(p = it.next()).wantsToContinue(this)) {
-                line.get(idx).addPassenger(p);
-                passengersOnBoard.remove(p);
-                //it.remove();
-            }
-        }
+        passengersOnBoard.removeIf(passenger -> !passenger.wantsToContinue(this));
     }
 
-    public void loadPassengers() {
-        Iterator<Passenger> it = line.get(idx).getPassengers().iterator();
-        Passenger p;
-        while (it.hasNext() && passengersOnBoard.size() < type.capacity) {
-            if ((p = it.next()).wantsToBoard(this)) {
-                passengersOnBoard.add(p);
-                line.get(idx).getPassengers().remove(p);
-                //it.remove();
-            }
+    public boolean loadPassenger(Passenger passenger) {
+        if (passengersOnBoard.size() < type.capacity) {
+            passengersOnBoard.add(passenger);
+            return true;
         }
+        return false;
     }
 
     public void update(float deltaTime) {

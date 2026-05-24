@@ -2,7 +2,7 @@ package view;
 
 import javafx.scene.paint.Color;
 
-public class JavaFxColorMapper {
+public class JavaFXColorMapper {
     public static Color mapModelColor(model.Color modelColor) {
         switch (modelColor) {
             case Red: return Color.color(0.8, 0.2, 0.2);

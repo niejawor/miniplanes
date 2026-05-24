@@ -42,7 +42,7 @@ public class LineRenderer {
         for (Line line : lines) {
             if (line.size() < 2) continue;
 
-            gc.setStroke(JavaFxColorMapper.mapModelColor(line.color));
+            gc.setStroke(JavaFXColorMapper.mapModelColor(line.color));
             gc.beginPath();
 
             Airport first = line.get(0);
