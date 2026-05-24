@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 
 // vm uruchomi sobie na jednym watku simulate i to bedzie sobie na spokojnie chodzic, inforamcje o wszytkim bedzie mogla poobierac od gameengine za pomoca odpowiedniego gettera
 public class GameEngine {
-    private AtomicInteger current_tick;
+    private final AtomicInteger currentTick;
     private final List<Airport> airports = new CopyOnWriteArrayList<>();
     private final List<Airplane> airplanes = new CopyOnWriteArrayList<>();
     private final List<Line> lines = new CopyOnWriteArrayList<>();
@@ -20,45 +20,45 @@ public class GameEngine {
 
     private final Queue<Event> events = new ConcurrentLinkedQueue<>();
 
-    private AtomicInteger number_of_available_lines;
-    private AtomicInteger numberOfAvailableAirplanes;
+    private final AtomicInteger numberOfAvailableLines;
+    private final AtomicInteger numberOfAvailableAirplanes;
 
-    private final int limit_of_lines = 7;
+    private final int limitOfLines = 7;
 
-    private AtomicInteger total_transported_passengers;
+    private final AtomicInteger totalTransportedPassengers;
 
     private AtomicBoolean isRunning;
-    private AtomicBoolean gameOver;
+    private final AtomicBoolean gameOver;
 
     private final int TARGET_TPS = 90;
     private final int OPTIMAL_TIME = 1000000000 / TARGET_TPS; // w nano sekundach
 
 
-    private final int update_time = TARGET_TPS*60*5; //co 5 minut
-    private final int max_overcrowded_time = TARGET_TPS*60; //minuta
+    private final int updateTime = TARGET_TPS*60*5; //co 5 minut
+    private final int maxOvercrowdedTime = TARGET_TPS*60; //minuta
 
     public GameEngine() {
-        current_tick = new AtomicInteger(0);
-        total_transported_passengers = new AtomicInteger(0);
-        number_of_available_lines = new AtomicInteger(5); // 3
+        currentTick = new AtomicInteger(0);
+        totalTransportedPassengers = new AtomicInteger(0);
+        numberOfAvailableLines = new AtomicInteger(5); // 3
         numberOfAvailableAirplanes = new AtomicInteger(5); // 3
         isRunning = new AtomicBoolean(true);
         gameOver = new AtomicBoolean(false);
     }
 
-    Airport get_next_airport(){
+    Airport getNextAirport(){
         Airport next =  airportSupplier.get();
         shapeHandler.updateUse(next.getShape());
         return next;
     }
 
 
-    public void add_event(Event e){
+    public void addEvent(Event e){
         events.add(e);
     } // za pomoca tego vm bedzie mogla dodawac eventy
 
-    public int get_current_tick(){
-        return current_tick.get();
+    public int getCurrentTick(){
+        return currentTick.get();
     }
 
     public List<Airport> getAirports(){
@@ -73,24 +73,24 @@ public class GameEngine {
         return lines;
     }
 
-    public void add_line(Line line, Airplane airplane){
+    public void addLine(Line line, Airplane airplane){
         lines.add(line);
         airplanes.add(airplane);
     }
 
-    public int get_total_transported_passengers(){
-        return total_transported_passengers.get();
+    public int getTotalTransportedPassengers(){
+        return totalTransportedPassengers.get();
     }
 
-    public int get_number_of_available_lines(){
-        return number_of_available_lines.get();
+    public int getNumberOfAvailableLines(){
+        return numberOfAvailableLines.get();
     }
 
     public int getNumberOfAvailableAirplanes(){
         return numberOfAvailableAirplanes.get();
     }
 
-    public boolean is_running(){
+    public boolean isRunning(){
         return isRunning.get();
     }
     
@@ -108,8 +108,8 @@ public class GameEngine {
         airport.addPassenger(new Passenger(shapeHandler.getRandomUsed()));
     }
 
-    public void decrement_number_of_available_lines(){
-        number_of_available_lines.decrementAndGet();
+    public void decrementNumberOfAvailableLines(){
+        numberOfAvailableLines.decrementAndGet();
     }
 
     public void decrementNumberOfAvailableAirplanes(){
@@ -125,13 +125,13 @@ public class GameEngine {
                 break;
             }
 
-            long start_time = System.nanoTime();
+            long startTime = System.nanoTime();
 
 
             if(!isRunning.get()){
-                if(System.nanoTime() - start_time < OPTIMAL_TIME){
+                if(System.nanoTime() - startTime < OPTIMAL_TIME){
                     try{
-                        long time_left = OPTIMAL_TIME - (System.nanoTime() - start_time);
+                        long time_left = OPTIMAL_TIME - (System.nanoTime() - startTime);
                         long millis = time_left / 1000000;
                         int nanos = (int) (time_left % 1000000);
                         Thread.sleep(millis, nanos);
@@ -139,7 +139,7 @@ public class GameEngine {
                     } catch (Exception e){}
                 }
 
-                current_tick.getAndIncrement();
+                currentTick.getAndIncrement();
                 continue;
             }
 
@@ -148,12 +148,12 @@ public class GameEngine {
                 Event event = events.poll();
                 event.handleEvent();
             }
-            final int get_tick = current_tick.get();
+            final int getTick = currentTick.get();
 
 
-            if(get_tick % update_time == 0){
-                if (number_of_available_lines.get() < limit_of_lines) {
-                    number_of_available_lines.getAndIncrement();
+            if(getTick % updateTime == 0){
+                if (numberOfAvailableLines.get() < limitOfLines) {
+                    numberOfAvailableLines.getAndIncrement();
                 }
                 numberOfAvailableAirplanes.getAndIncrement();
             }
@@ -173,7 +173,7 @@ public class GameEngine {
 
             for(Airport a: airports){
                 float temp = a.howLongOverCrowded();
-                if(temp > max_overcrowded_time){
+                if(temp > maxOvercrowdedTime){
                     isRunning.set(false);
                     break;
                 }
@@ -181,17 +181,17 @@ public class GameEngine {
 
             //dodanie nowych lotnisk jesli jest na to czas - poczatkowo co 2 minuty
 
-            if(get_tick % TARGET_TPS*60*2 == 0){
+            if(getTick % TARGET_TPS*60*2 == 0){
                 try {
-                    airports.add(get_next_airport());
+                    airports.add(getNextAirport());
                 } catch (Exception e) {
 
                 }
             }
 
-            if(System.nanoTime() - start_time < OPTIMAL_TIME){
+            if(System.nanoTime() - startTime < OPTIMAL_TIME){
                 try{
-                    long time_left = OPTIMAL_TIME - (System.nanoTime() - start_time);
+                    long time_left = OPTIMAL_TIME - (System.nanoTime() - startTime);
                     long millis = time_left / 1000000;
                     int nanos = (int) (time_left % 1000000);
                     Thread.sleep(millis, nanos);
@@ -200,7 +200,7 @@ public class GameEngine {
             }
 
             //do kolejnego ticka
-            current_tick.incrementAndGet();
+            currentTick.incrementAndGet();
 
         }
     }
