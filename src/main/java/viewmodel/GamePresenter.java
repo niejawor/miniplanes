@@ -22,6 +22,6 @@ public class GamePresenter {
     public List<Line> getLines() { return engine.getLines(); }
 
     public void createConfirmedRoute(List<Airport> routeAirports) {
-        engine.add_event(new Event.AddLineEvent(engine,routeAirports));
+        engine.addEvent(new Event.AddLineEvent(engine,routeAirports));
     }
 }

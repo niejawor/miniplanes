@@ -35,7 +35,7 @@ public interface Event {
             Airplane airplane = new Airplane(newLine, AirplaneType.SmallAirplane);
             newLine.get(0).airplaneReportsToLanding(airplane);
 
-            engine.add_line(newLine, airplane);
+            engine.addLine(newLine, airplane);
 
             return true;
         }
@@ -61,15 +61,15 @@ public interface Event {
 
     public class EditLineAddEvent implements Event {
         GameEngine engine;
-        int airport_to_add;
-        int before_airport;
-        int after_airport;
+        int airportToAdd;
+        int beforeAirport;
+        int afterAirport;
         int lineId;
 
-        EditLineAddEvent(int before_airport, int id_of_airport_to_add, int after_airport,  GameEngine engine, int lineId) {
-            this.before_airport = before_airport;
-            this.after_airport = after_airport;
-            this.airport_to_add = id_of_airport_to_add;
+        EditLineAddEvent(int beforeAirport, int idOfAirportToAdd, int afterAirport, GameEngine engine, int lineId) {
+            this.beforeAirport = beforeAirport;
+            this.afterAirport = afterAirport;
+            this.airportToAdd = idOfAirportToAdd;
             this.engine = engine;
             this.lineId = lineId;
         }
@@ -77,7 +77,7 @@ public interface Event {
         @Override
         public boolean handleEvent() {
             var airports = engine.getAirports();
-            return engine.getLines().get(lineId).addAirportBetween(airports.get(before_airport), airports.get(after_airport), airports.get(airport_to_add));
+            return engine.getLines().get(lineId).addAirportBetween(airports.get(beforeAirport), airports.get(afterAirport), airports.get(airportToAdd));
         }
     }
 
@@ -115,17 +115,17 @@ public interface Event {
         @Override
         public boolean handleEvent() {
             if (!engine.getLines().get(lineId).delAirport(engine.getAirports().get(airportToRemove))) return false;
-            if (engine.getLines().get(lineId).size() <= 1) engine.add_event(new RemoveLineEvent(lineId, engine));
+            if (engine.getLines().get(lineId).size() <= 1) engine.addEvent(new RemoveLineEvent(lineId, engine));
             return true;
         }
     }
 
     public class AddAirplaneEvent implements Event {
         GameEngine engine;
-        int line_id;
+        int lineId;
 
-        AddAirplaneEvent(int line_id, GameEngine engine) {
-            this.line_id = line_id;
+        AddAirplaneEvent(int lineId, GameEngine engine) {
+            this.lineId = lineId;
             this.engine = engine;
         }
 
@@ -134,17 +134,17 @@ public interface Event {
             List<Airplane> airplanes = engine.getAirplanes();
             if (engine.getNumberOfAvailableAirplanes() == 0) return false;
             engine.decrementNumberOfAvailableAirplanes();
-            return airplanes.add(new Airplane(engine.getLines().get(line_id), AirplaneType.SmallAirplane));
+            return airplanes.add(new Airplane(engine.getLines().get(lineId), AirplaneType.SmallAirplane));
         }
     }
 
     public class RemoveAirplaneEvent implements Event {
         GameEngine engine;
-        int line_id;
+        int lineId;
         Airplane airplaneToRemove;
 
-        RemoveAirplaneEvent(int line_id, GameEngine engine, Airplane airplaneToRemove) {
-            this.line_id = line_id;
+        RemoveAirplaneEvent(int lineId, GameEngine engine, Airplane airplaneToRemove) {
+            this.lineId = lineId;
             this.engine = engine;
             this.airplaneToRemove = airplaneToRemove;
         }
