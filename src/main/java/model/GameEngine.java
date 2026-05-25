@@ -205,6 +205,7 @@ public class GameEngine {
         }
     }
 
+
     AtomicInteger nPassengers = new AtomicInteger(0);
     public int getResult() {
         // TODO
