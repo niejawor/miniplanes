@@ -91,10 +91,11 @@ public class Airport {
         return timeOverCrowded;
     }
 
-    private void unloadPassengersForAllPlanes() {
-        for (AirplaneEntry entry : parkedAirplanes) {
-            entry.airplane.unloadPassengers();
-        }
+    private int unloadPassengersForAllPlanes() {
+        int x = 0;
+        for (AirplaneEntry entry : parkedAirplanes)
+            x += entry.airplane.unloadPassengers(this);
+        return x;
     }
 
     private void loadPassengersForAllPlanes() {
@@ -117,11 +118,11 @@ public class Airport {
         }
     }
 
-    public void update(float deltaTime) {
+    public int update(float deltaTime) {
         finishTakeOffs();
         finishLandings();
 
-        unloadPassengersForAllPlanes();
+        int x = unloadPassengersForAllPlanes();
         loadPassengersForAllPlanes();
 
         processNewTakeOffs();
@@ -129,6 +130,7 @@ public class Airport {
 
         updateOverCrowded(deltaTime);
         generateNewPassengers(deltaTime);
+        return x;
     }
 
     public void finishTakeOffs() {

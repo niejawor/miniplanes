@@ -166,7 +166,7 @@ public class GameEngine {
 
             for(Airport a: airports){
                 //total_transported_passengers.getAndAdd(a.update((float)1/TARGET_TPS));
-                a.update((float)1/TARGET_TPS);
+                nPassengers.addAndGet(a.update((float)1/TARGET_TPS));
             }
 
             //sprawdza czy cos jest overcrowded - ewentualny koniec gry
@@ -205,10 +205,10 @@ public class GameEngine {
         }
     }
 
-
+    AtomicInteger nPassengers = new AtomicInteger(0);
     public int getResult() {
         // TODO
-        return 1235;
+        return nPassengers.get();
     }
 
     public Weekdays getDay() {
