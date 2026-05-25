@@ -113,36 +113,33 @@ public class LineEditor {
 
         double width = canvas.getWidth();
         double height = canvas.getHeight();
+        double startX = start.getPosition().getX() * width;
+        double startY = start.getPosition().getY() * height;
+        double endX = end.getPosition().getX() * width;
+        double endY = end.getPosition().getY() * height;
+        double controlX = mouseX * width;
+        double controlY = mouseY * height;
 
         gc.save();
-        gc.setStroke(Color.ORANGE);
-        gc.setLineWidth(6.0);
         gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
         gc.setLineJoin(javafx.scene.shape.StrokeLineJoin.ROUND);
-        gc.beginPath();
-        gc.moveTo(start.getPosition().getX() * width, start.getPosition().getY() * height);
-        gc.lineTo(end.getPosition().getX() * width, end.getPosition().getY() * height);
-        gc.stroke();
 
-        if (hoverAirportIndex != -1) {
-            Airport hoverAirport = presenter.getAirports().get(hoverAirportIndex);
-            double hx = hoverAirport.getPosition().getX() * width;
-            double hy = hoverAirport.getPosition().getY() * height;
-            gc.setStroke(Color.YELLOW);
-            gc.setLineWidth(3.0);
-            gc.setLineDashes(6.0, 6.0);
-            gc.beginPath();
-            gc.moveTo((start.getPosition().getX() + end.getPosition().getX()) / 2 * width,
-                    (start.getPosition().getY() + end.getPosition().getY()) / 2 * height);
-            gc.lineTo(hx, hy);
-            gc.stroke();
-            gc.setLineDashes(null);
-            gc.setFill(Color.color(1.0, 1.0, 0.0, 0.5));
-            gc.fillOval(hx - 12, hy - 12, 24, 24);
-            gc.setStroke(Color.BLACK);
-            gc.setLineWidth(1.5);
-            gc.strokeOval(hx - 12, hy - 12, 24, 24);
-        }
+        gc.setStroke(Color.LIGHTGREEN);
+        gc.setLineWidth(4.0);
+        gc.setLineDashes(10.0, 8.0);
+        gc.beginPath();
+        gc.moveTo(startX, startY);
+        gc.lineTo(controlX, controlY);
+        gc.lineTo(endX, endY);
+        gc.stroke();
+        gc.setLineDashes(null);
+
+        gc.setFill(Color.color(0.2, 0.9, 0.2, 0.4));
+        gc.fillOval(controlX - 10, controlY - 10, 20, 20);
+        gc.setStroke(Color.GREENYELLOW);
+        gc.setLineWidth(2.0);
+        gc.strokeOval(controlX - 10, controlY - 10, 20, 20);
+
         gc.restore();
     }
 

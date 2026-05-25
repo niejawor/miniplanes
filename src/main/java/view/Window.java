@@ -60,6 +60,15 @@ public class Window extends Pane {
             }
         });
 
+        setOnMouseDragged(e -> {
+            float x = (float) (e.getX() / canvas.getWidth());
+            float y = (float) (e.getY() / canvas.getHeight());
+            routeBuilder.updateMousePosition(x, y);
+            if (lineEditor.isEditing()) {
+                lineEditor.updateMousePosition(x, y, presenter);
+            }
+        });
+
         setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ENTER) {
                 handleEnterPress();
