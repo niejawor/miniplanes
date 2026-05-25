@@ -41,8 +41,25 @@ public class Airplane {
         return Collections.unmodifiableList(passengersOnBoard);
     }
 
-    public void unloadPassengers() {
-        passengersOnBoard.removeIf(passenger -> !passenger.wantsToContinue(this));
+    class IntBox {
+        int val = 0;
+        void inc() {
+            val++;
+        }
+    };
+    public int unloadPassengers(Airport airport) {
+        final IntBox nPassengers = new IntBox();
+        passengersOnBoard.removeIf(passenger -> {
+            if (passenger.destination == airport.getShape()) {
+                nPassengers.inc();
+                return true;
+            } else if (!passenger.wantsToBoard(this)) {
+                airport.addPassenger(passenger);
+                return true;
+            }
+            return false;
+        });
+        return nPassengers.val;
     }
 
     public boolean loadPassenger(Passenger passenger) {
