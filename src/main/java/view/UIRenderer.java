@@ -93,6 +93,5 @@ public class UIRenderer {
         double scoreY = cy + (radius * 0.5);
         gc.fillText(String.valueOf(score), textX, scoreY);
 
-        gc.restore();
     }
 }

@@ -66,7 +66,7 @@ public interface Event {
         int afterAirport;
         int lineId;
 
-        EditLineAddEvent(int beforeAirport, int idOfAirportToAdd, int afterAirport, GameEngine engine, int lineId) {
+        public EditLineAddEvent(int beforeAirport, int idOfAirportToAdd, int afterAirport, GameEngine engine, int lineId) {
             this.beforeAirport = beforeAirport;
             this.afterAirport = afterAirport;
             this.airportToAdd = idOfAirportToAdd;
@@ -77,7 +77,23 @@ public interface Event {
         @Override
         public boolean handleEvent() {
             var airports = engine.getAirports();
-            return engine.getLines().get(lineId).addAirportBetween(airports.get(beforeAirport), airports.get(afterAirport), airports.get(airportToAdd));
+            Line line = engine.getLines().get(lineId);
+            int insertionIndex = -1;
+            for (int i = 0; i < line.size(); i++) {
+                if (line.get(i) == airports.get(beforeAirport)) {
+                    insertionIndex = i + 1;
+                    break;
+                }
+            }
+            boolean result = line.addAirportBetween(airports.get(beforeAirport), airports.get(afterAirport), airports.get(airportToAdd));
+            if (result && insertionIndex != -1) {
+                for (Airplane airplane : engine.getAirplanes()) {
+                    if (airplane.line == line && airplane.idx >= insertionIndex) {
+                        airplane.idx++;
+                    }
+                }
+            }
+            return result;
         }
     }
 
@@ -97,7 +113,18 @@ public interface Event {
         @Override
         public boolean handleEvent(){
             var airports = engine.getAirports();
-            return engine.getLines().get(lineId).addAirportToEdge(airports.get(edgeAirportId), airports.get(airportId));
+            Line line = engine.getLines().get(lineId);
+            Airport edgeAirport = airports.get(edgeAirportId);
+            boolean insertAtStart = edgeAirport == line.get(0);
+            boolean result = line.addAirportToEdge(edgeAirport, airports.get(airportId));
+            if (result && insertAtStart) {
+                for (Airplane airplane : engine.getAirplanes()) {
+                    if (airplane.line == line && airplane.idx >= 0) {
+                        airplane.idx++;
+                    }
+                }
+            }
+            return result;
         }
     }
 

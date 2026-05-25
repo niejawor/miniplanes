@@ -1,41 +1,49 @@
 package view;
 
-import javafx.scene.canvas.GraphicsContext;
 import model.Airport;
 import model.Passenger;
-
-import java.util.List;
+import viewmodel.GamePresenter;
 
 public class AirportRenderer {
-    public void drawAirports(GraphicsContext gc, List<Airport> airports, double w, double h) {
+    private final GamePresenter presenter;
+    private final ShapePainter shapePainter;
+
+    public AirportRenderer(GamePresenter presenter, ShapePainter shapePainter) {
+        this.presenter = presenter;
+        this.shapePainter = shapePainter;
+    }
+
+    public void drawAirports() {
         float size = 0.008f;
         model.Color color = model.Color.Red;
-        for (Airport airport : airports) {
+
+        for (Airport airport : presenter.getAirports()) {
             float x = airport.getPosition().getX();
             float y = airport.getPosition().getY();
-            ShapeDrawer.drawShape(gc, w, h, airport.getShape(), x, y, size, color);
-            drawAirportDetails(gc, airport, w, h);
+            shapePainter.drawSingleShape(airport.getShape(), x, y, size, color);
+            drawAirportDetails(airport);
         }
     }
 
-    private void drawAirportDetails(GraphicsContext gc, Airport airport, double w, double h) {
+    private void drawAirportDetails(Airport airport) {
         float x = airport.getPosition().getX();
         float y = airport.getPosition().getY();
-
         int passCount = 0;
         int maxPassengersToShow = 10;
-
         model.Color normalColor = model.Color.Blue;
         model.Color overloadColor = model.Color.Black;
         model.Color color = normalColor;
 
         for (Passenger p : airport.getPassengers()) {
-            if (passCount >= maxPassengersToShow) break;
-            if (passCount == airport.getAirportType().passengerCapacity)
+            if (passCount >= maxPassengersToShow) {
+                break;
+            }
+            if (passCount == airport.getAirportType().passengerCapacity) {
                 color = overloadColor;
+            }
             float px = x + ((passCount % 5) * 0.008f) + 0.004f;
             float py = y + ((passCount / 5) * 0.015f) + 0.028f;
-            ShapeDrawer.drawShape(gc, w, h, p.getDestination(), px, py, 0.003f, color);
+            shapePainter.drawSingleShape(p.getDestination(), px, py, 0.003f, color);
             passCount++;
         }
     }
