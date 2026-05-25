@@ -25,6 +25,8 @@ public class GameRenderer {
     private final AirportRenderer airportRenderer;
     private final LineRenderer lineRenderer;
     private final UIRenderer uiRenderer = new UIRenderer();
+    private final AirplaneRenderer airplaneRenderer;
+
     public GameRenderer(GamePresenter presenter, Canvas canvas, RouteBuilder routeBuilder, LineEditor lineEditor) {
         this.presenter = presenter;
         this.canvas = canvas;
@@ -36,6 +38,7 @@ public class GameRenderer {
         this.lineRenderer = new LineRenderer(presenter);
         this.backgroundTexture = new Image(new File("src/assets/mapa.png").toURI().toString());
         this.airplaneTexture = new Image(new File("src/assets/airplane2.png").toURI().toString());
+        this.airplaneRenderer = new AirplaneRenderer(presenter, airplaneTexture);
         // UI is drawn during each render call where canvas size is known
     }
 
@@ -50,51 +53,9 @@ public class GameRenderer {
         lineRenderer.drawLines(gc, canvas);
         airportRenderer.drawAirports();
         lineEditor.drawPreview(gc, canvas, presenter);
-        drawAirplanes();
+        airplaneRenderer.drawAirplanes(gc, width, height);
         // draw UI overlay (clock, day, score)
         uiRenderer.drawUI(gc, width, height, presenter.getMinutes(), presenter.getDay(), presenter.getResult());
     }
-
-    private void drawAirplanes() {
-        if (presenter.getAirplanes() == null) {
-            return;
-        }
-
-        double width = canvas.getWidth();
-        double height = canvas.getHeight();
-        double screenAspect = width / height;
-
-        double texWidth = airplaneTexture.getWidth();
-        double texHeight = airplaneTexture.getHeight();
-        double textureAspect = texWidth / texHeight;
-
-        for (Airplane plane : presenter.getAirplanes()) {
-            float x = plane.getPosition().getX();
-            float y = plane.getPosition().getY();
-            float scale = plane.getType() == AirplaneType.SmallAirplane ? 0.02f : 0.015f;
-
-            float angle = 0f;
-            if (plane.isCurrentlyFlying()) {
-                float destX = plane.getDestination().getPosition().getX();
-                float destY = plane.getDestination().getPosition().getY();
-                float dx = destX - x;
-                float dy = destY - y;
-                angle = (float) Math.toDegrees(Math.atan2(dy * (height / width), dx));
-            }
-
-            double planeHeight = (scale * 2) / screenAspect;
-            double planeWidth = planeHeight * textureAspect;
-
-            gc.save();
-            gc.translate(x * width, y * height);
-            gc.rotate(angle);
-
-            double drawWidth = planeWidth * width;
-            double drawHeight = planeHeight * width;
-            gc.drawImage(airplaneTexture, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
-            gc.restore();
-        }
-    }
-
 }
 
