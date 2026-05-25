@@ -1,6 +1,7 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -53,23 +54,23 @@ public class Airport {
     }
 
     public List<Passenger> getPassengers() {
-        return passengers;
+        return Collections.unmodifiableList(passengers);
     }
 
     public List<AirplaneEntry> getParkedAirplanes() {
-        return parkedAirplanes;
+        return Collections.unmodifiableList(parkedAirplanes);
     }
 
     public List<AirplaneEntry> getLandingAirplanes() {
-        return landingAirplanes;
+        return Collections.unmodifiableList(landingAirplanes);
     }
 
     public List<AirplaneEntry> getStartingAirplanes() {
-        return startingAirplanes;
+        return Collections.unmodifiableList(startingAirplanes);
     }
 
     public List<Airplane> getQueuedAirplanes() {
-        return queuedAirplanes;
+        return Collections.unmodifiableList(queuedAirplanes);
     }
 
     public void addPassenger(Passenger passenger) {
@@ -98,7 +99,11 @@ public class Airport {
 
     private void loadPassengersForAllPlanes() {
         for (AirplaneEntry entry : parkedAirplanes) {
-            entry.airplane.loadPassengers();
+            passengers.removeIf(passenger-> {
+                if (passenger.wantsToBoard(entry.airplane) && entry.airplane.loadPassenger(passenger))
+                    return true;
+                return false;
+            });
         }
     }
 
