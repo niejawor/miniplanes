@@ -1,5 +1,6 @@
 package view;
-
+import model.GameEngine;
+import model.Weekdays;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
@@ -8,6 +9,7 @@ import javafx.scene.shape.StrokeLineJoin;
 import model.Airplane;
 import model.AirplaneType;
 import viewmodel.GamePresenter;
+
 
 import java.io.File;
 
@@ -22,7 +24,7 @@ public class GameRenderer {
     private final LineEditor lineEditor;
     private final AirportRenderer airportRenderer;
     private final LineRenderer lineRenderer;
-
+    private final UIRenderer uiRenderer = new UIRenderer();
     public GameRenderer(GamePresenter presenter, Canvas canvas, RouteBuilder routeBuilder, LineEditor lineEditor) {
         this.presenter = presenter;
         this.canvas = canvas;
@@ -34,6 +36,7 @@ public class GameRenderer {
         this.lineRenderer = new LineRenderer(presenter);
         this.backgroundTexture = new Image(new File("src/assets/mapa.png").toURI().toString());
         this.airplaneTexture = new Image(new File("src/assets/airplane2.png").toURI().toString());
+        // UI is drawn during each render call where canvas size is known
     }
 
     public void render() {
@@ -48,6 +51,8 @@ public class GameRenderer {
         airportRenderer.drawAirports();
         lineEditor.drawPreview(gc, canvas, presenter);
         drawAirplanes();
+        // draw UI overlay (clock, day, score)
+        uiRenderer.drawUI(gc, width, height, presenter.getMinutes(), presenter.getDay(), presenter.getResult());
     }
 
     private void drawAirplanes() {

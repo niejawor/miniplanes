@@ -1,22 +1,20 @@
 package view;
 
-import javafx.scene.paint.Color;
-
 public final class ColorMapper {
     private ColorMapper() {
     }
 
-    public static Color mapModelColor(model.Color modelColor) {
+    public static javafx.scene.paint.Color mapModelColor(model.Color modelColor) {
         switch (modelColor) {
             case Red:
-                return Color.color(0.8, 0.2, 0.2);
+                return javafx.scene.paint.Color.color(0.8, 0.2, 0.2);
             case Green:
-                return Color.color(0.2, 0.8, 0.2);
+                return javafx.scene.paint.Color.color(0.2, 0.8, 0.2);
             case Blue:
-                return Color.color(0.2, 0.2, 0.8);
+                return javafx.scene.paint.Color.color(0.2, 0.2, 0.8);
             case Black:
             default:
-                return Color.BLACK;
+                return javafx.scene.paint.Color.BLACK;
         }
     }
 }
