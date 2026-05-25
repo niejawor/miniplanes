@@ -205,4 +205,19 @@ public class GameEngine {
         }
     }
 
+
+    public int getResult() {
+        // TODO
+        return 1235;
+    }
+
+    public Weekdays getDay() {
+        // TODO
+        return Weekdays.MON;
+    }
+
+    public int getMinutes() {
+        // TODO
+        return 18 * 60 + 49;
+    }
 }

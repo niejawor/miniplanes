@@ -2,6 +2,8 @@ package view;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import model.GameEngine;
+import model.Weekdays;
 import viewmodel.GamePresenter;
 
 public class GameRenderer {
@@ -12,6 +14,7 @@ public class GameRenderer {
     private final AirportRenderer airportRenderer = new AirportRenderer();
     private final AirplaneRenderer airplaneRenderer;
     private final LineRenderer lineRenderer = new LineRenderer();
+    private final UIRenderer uiRenderer = new UIRenderer();
 
     public GameRenderer(GamePresenter presenter, Image background, Image airplane, InputHandler inputHandler) {
         this.presenter = presenter;
@@ -29,5 +32,11 @@ public class GameRenderer {
         lineRenderer.drawLines(gc, presenter.getLines(), w, h);
         airportRenderer.drawAirports(gc, presenter.getAirports(), w, h);
         airplaneRenderer.drawAirplanes(gc, presenter.getAirplanes(), w, h);
+
+        int minutes = presenter.getMinutes();
+        Weekdays day = presenter.getDay();
+        int score = presenter.getResult();
+
+        uiRenderer.drawUI(gc, w, h, minutes, day, score);
     }
 }

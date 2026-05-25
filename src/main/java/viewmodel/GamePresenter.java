@@ -24,4 +24,16 @@ public class GamePresenter {
     public void createConfirmedRoute(List<Airport> routeAirports) {
         engine.addEvent(new Event.AddLineEvent(engine,routeAirports));
     }
+
+    public int getMinutes() {
+        return engine.getMinutes();
+    }
+
+    public Weekdays getDay() {
+        return engine.getDay();
+    }
+
+    public int getResult() {
+        return engine.getResult();
+    }
 }
