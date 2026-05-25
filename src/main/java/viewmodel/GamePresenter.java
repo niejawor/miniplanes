@@ -25,17 +25,6 @@ public class GamePresenter {
         engine.addEvent(new Event.AddLineEvent(engine, routeAirports));
     }
 
-    public int getMinutes() {
-        return engine.getMinutes();
-    }
-
-    public Weekdays getDay() {
-        return engine.getDay();
-    }
-
-    public int getResult() {
-        return engine.getResult();
-    }
     
     public void pauseSimulation() {
         engine.pause();
