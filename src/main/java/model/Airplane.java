@@ -9,9 +9,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class Airplane {
     final Line line;
     int idx = 0;
+    private boolean unloaded = false;
+    private boolean loaded = false;
     private boolean flyingForward = true;
-    private boolean valid = true;
     private boolean currentlyFlying = false;
+
+    private boolean valid = true;
     private Point position;
 
     AirplaneType type;
@@ -102,13 +105,18 @@ public class Airplane {
     }
 
     private void prepareNextFlight() {
-        if (flyingForward) idx++;
-        else idx--;
-
-        if (idx <= -1 || idx >= line.size()) {
-            flyingForward = !flyingForward;
-            if (idx <= -1) idx = 0;
-            else idx = line.size() - 1;
+        if (flyingForward) {
+            idx++;
+            if (idx >= line.size()) {
+                flyingForward = false;
+                idx = line.size() - 2;
+            }
+        } else {
+            idx--;
+            if (idx <= -1) {
+                flyingForward = true;
+                idx = 1;
+            }
         }
     }
 
@@ -139,4 +147,10 @@ public class Airplane {
     public void setInvalid() { valid = false; }
 
     public boolean isValid() { return valid; }
+
+    public boolean hasUnloaded() { return unloaded; }
+    public void setUnloaded(boolean b) { unloaded = b; }
+
+    public boolean hasLoaded() { return loaded; }
+    public void setLoaded(boolean b) { loaded = b; }
 }

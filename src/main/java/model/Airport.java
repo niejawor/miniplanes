@@ -8,12 +8,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Airport {
     public static class AirplaneEntry {
-        int index;          // Terminal dla zaparkowanych, numer pasa startowego dla startujących i numer pasa lądowania dla lądujących
-        Airplane airplane;
+        public int index;          // Terminal dla zaparkowanych, numer pasa startowego dla startujących i numer pasa lądowania dla lądujących
+        public int terminalIndex;
+        public Airplane airplane;
 
-        public AirplaneEntry(Airplane airplane, int index) {
+        public AirplaneEntry(Airplane airplane, int index, int terminalIndex) {
             this.airplane = airplane;
             this.index = index;
+            this.terminalIndex = terminalIndex;
         }
     };
 
@@ -91,21 +93,26 @@ public class Airport {
         return timeOverCrowded;
     }
 
-    private int unloadPassengersForAllPlanes() {
+    private int processParkedAirplanes() {
         int x = 0;
-        for (AirplaneEntry entry : parkedAirplanes)
-            x += entry.airplane.unloadPassengers(this);
-        return x;
-    }
-
-    private void loadPassengersForAllPlanes() {
         for (AirplaneEntry entry : parkedAirplanes) {
-            passengers.removeIf(passenger-> {
-                if (passenger.wantsToBoard(entry.airplane) && entry.airplane.loadPassenger(passenger))
-                    return true;
-                return false;
-            });
+            Airplane a = entry.airplane;
+
+            if (!a.hasUnloaded() && a.getTimeSpent() >= 1.0f) {
+                x += a.unloadPassengers(this);
+                a.setUnloaded(true);
+            }
+
+            if (!a.hasLoaded() && a.getTimeSpent() >= 2.0f) {
+                passengers.removeIf(passenger -> {
+                    if (passenger.wantsToBoard(a) && a.loadPassenger(passenger))
+                        return true;
+                    return false;
+                });
+                a.setLoaded(true);
+            }
         }
+        return x;
     }
 
     private float lastNewPassenger = 0f;
@@ -122,8 +129,7 @@ public class Airport {
         finishTakeOffs();
         finishLandings();
 
-        int x = unloadPassengersForAllPlanes();
-        loadPassengersForAllPlanes();
+        int x = processParkedAirplanes();
 
         processNewTakeOffs();
         processNewLandings();
@@ -151,7 +157,7 @@ public class Airport {
         AirplaneEntry entry;
         while (it.hasNext()) {
             if ((entry=it.next()).airplane.getTimeSpent() >= type.timeSpentLanding) {
-                parkedAirplanes.add(new AirplaneEntry(entry.airplane, currentlyFreeTerminal));
+                parkedAirplanes.add(new AirplaneEntry(entry.airplane, currentlyFreeTerminal, currentlyFreeTerminal));
                 currentlyFreeTerminal += 1;
                 currentlyFreeTerminal %= type.terminals;
                 entry.airplane.startDockingProcedure();
@@ -175,7 +181,7 @@ public class Airport {
         while (canLand()) {
             Airplane a = queuedAirplanes.get(0);
             queuedAirplanes.remove(0);
-            landingAirplanes.add(new AirplaneEntry(a, currentlyFreeLandingRunway));
+            landingAirplanes.add(new AirplaneEntry(a, currentlyFreeLandingRunway, (landingAirplanes.size() + currentlyFreeTerminal) % type.terminals));
             currentlyFreeLandingRunway++;
             currentlyFreeLandingRunway %= type.landingRunways;
             a.startLandingProcedure();
@@ -190,8 +196,11 @@ public class Airport {
     public void processNewTakeOffs() {
         while (canTakeOff()) {
             Airplane a = parkedAirplanes.get(0).airplane;
+            if (!a.hasLoaded()) break;
+            a.setUnloaded(false);
+            a.setLoaded(false);
+            startingAirplanes.add(new AirplaneEntry(a, currentlyFreeStartingRunway, parkedAirplanes.get(0).terminalIndex));
             parkedAirplanes.remove(0);
-            startingAirplanes.add(new AirplaneEntry(a, currentlyFreeStartingRunway));
             currentlyFreeStartingRunway++;
             currentlyFreeStartingRunway %= type.takeoffRunways;
             a.startTakeOffProcedure();

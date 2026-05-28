@@ -1,15 +1,9 @@
 package view;
-import model.GameEngine;
-import model.Weekdays;
+
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
-import javafx.scene.shape.StrokeLineCap;
-import javafx.scene.shape.StrokeLineJoin;
-import model.Airplane;
-import model.AirplaneType;
 import viewmodel.GamePresenter;
-
 
 import java.io.File;
 
@@ -34,27 +28,33 @@ public class GameRenderer {
         this.shapePainter = new ShapePainter(gc, canvas);
         this.routeBuilder = routeBuilder;
         this.lineEditor = lineEditor;
-        this.airportRenderer = new AirportRenderer(presenter, shapePainter);
         this.lineRenderer = new LineRenderer(presenter);
         this.backgroundTexture = new Image(new File("src/assets/mapa.png").toURI().toString());
         this.airplaneTexture = new Image(new File("src/assets/airplane2.png").toURI().toString());
-        this.airplaneRenderer = new AirplaneRenderer(presenter, airplaneTexture);
-        // UI is drawn during each render call where canvas size is known
+        this.airportRenderer = new AirportRenderer(presenter, shapePainter, airplaneTexture);
+        this.airplaneRenderer = new AirplaneRenderer(presenter, airplaneTexture, shapePainter);
     }
 
-    public void render() {
+    public void render(double zoom, double panX, double panY) {
         double width = canvas.getWidth();
         double height = canvas.getHeight();
 
         gc.clearRect(0, 0, width, height);
+
+        gc.save();
+        gc.translate(panX, panY);
+        gc.scale(zoom, zoom);
+
         gc.drawImage(backgroundTexture, 0, 0, width, height);
 
         routeBuilder.drawTempRoute(gc, canvas);
         lineRenderer.drawLines(gc, canvas);
-        airportRenderer.drawAirports();
+        airportRenderer.drawAirports(gc, width, height, zoom);
         lineEditor.drawPreview(gc, canvas, presenter);
-        airplaneRenderer.drawAirplanes(gc, width, height);
-        // draw UI overlay (clock, day, score)
+        airplaneRenderer.drawAirplanes(gc, width, height, zoom);
+
+        gc.restore();
+
         uiRenderer.drawUI(gc, width, height, presenter.getMinutes(), presenter.getDay(), presenter.getResult());
     }
 }

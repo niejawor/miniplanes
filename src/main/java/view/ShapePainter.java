@@ -24,7 +24,8 @@ public class ShapePainter {
         float s;
         gc.setFill(ColorMapper.mapModelColor(color));
         gc.setStroke(Color.BLACK);
-        gc.setLineWidth(1.8 / w);
+
+        gc.setLineWidth(170 * size / w);
 
         switch (shape) {
             case Triangle:
