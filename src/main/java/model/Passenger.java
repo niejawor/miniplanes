@@ -13,10 +13,7 @@ public class Passenger {
 
     public boolean wantsToBoard(Airplane airplane) {
         if (airplane.isFlyingForward()) {
-            for (int i = airplane.idx; i < airplane.line.size(); i++)
-                if (airplane.line.get(i).getShape() == destination) return true;
-        } else {
-            for (int i = airplane.idx; i >= 0; i--)
+            for (int i = 0; i < airplane.line.size(); i++)
                 if (airplane.line.get(i).getShape() == destination) return true;
         }
 
