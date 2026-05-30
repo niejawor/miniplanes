@@ -8,14 +8,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-
+// TODO: delete
 // vm uruchomi sobie na jednym watku simulate i to bedzie sobie na spokojnie chodzic, inforamcje o wszytkim bedzie mogla poobierac od gameengine za pomoca odpowiedniego gettera
 public class GameEngine {
     private final AtomicInteger currentTick;
     private final List<Airport> airports = new CopyOnWriteArrayList<>();
     private final List<Airplane> airplanes = new CopyOnWriteArrayList<>();
     private final List<Line> lines = new CopyOnWriteArrayList<>();
-    private final Supplier<Airport> airportSupplier = new AirportSupplier(AirportListGenerator.generateAirports(this), null);
+    //private final Supplier<Airport> airportSupplier = new AirportSupplier(AirportListGenerator.generateAirports(this), null);
     private final EnumIterator<Shape> shapeHandler = new EnumIterator<>(Shape.class);
 
     private final Queue<Event> events = new ConcurrentLinkedQueue<>();
@@ -23,7 +23,6 @@ public class GameEngine {
     private final AtomicInteger numberOfAvailableLines;
     private final AtomicInteger numberOfAvailableAirplanes;
 
-    private final int limitOfLines = 7;
 
     private final AtomicInteger totalTransportedPassengers;
 
@@ -46,11 +45,11 @@ public class GameEngine {
         gameOver = new AtomicBoolean(false);
     }
 
-    Airport getNextAirport(){
-        Airport next =  airportSupplier.get();
-        shapeHandler.updateUse(next.getShape());
-        return next;
-    }
+//    Airport getNextAirport(){
+//        Airport next =  airportSupplier.get();
+//        shapeHandler.updateUse(next.getShape());
+//        return next;
+//    }
 
 
     public void addEvent(Event e){
@@ -104,9 +103,7 @@ public class GameEngine {
         gameOver.set(true);
     }
 
-    public void generatePassenger(Airport airport){
-        airport.addPassenger(new Passenger(shapeHandler.getRandomUsed()));
-    }
+    //public void generatePassenger(Airport airport){}
 
     public void decrementNumberOfAvailableLines(){
         numberOfAvailableLines.decrementAndGet();
@@ -151,43 +148,25 @@ public class GameEngine {
             final int getTick = currentTick.get();
 
 
-            if(getTick % updateTime == 0){
-                if (numberOfAvailableLines.get() < limitOfLines) {
-                    numberOfAvailableLines.getAndIncrement();
-                }
-                numberOfAvailableAirplanes.getAndIncrement();
-            }
+
 
             //wysylam update do samolotow i lotnisk ile czasu minelo - w tickach
 
-            for(Airplane a: airplanes){
-                a.update((float)1/TARGET_TPS);
-            }
 
-            for(Airport a: airports){
-                //total_transported_passengers.getAndAdd(a.update((float)1/TARGET_TPS));
-                nPassengers.addAndGet(a.update((float)1/TARGET_TPS));
-            }
 
             //sprawdza czy cos jest overcrowded - ewentualny koniec gry
 
-            for(Airport a: airports){
-                float temp = a.howLongOverCrowded();
-                if(temp > maxOvercrowdedTime){
-                    isRunning.set(false);
-                    break;
-                }
-            }
+
 
             //dodanie nowych lotnisk jesli jest na to czas - poczatkowo co 2 minuty
 
-            if(getTick % TARGET_TPS*60*2 == 0){
-                try {
-                    airports.add(getNextAirport());
-                } catch (Exception e) {
-
-                }
-            }
+//            if(getTick % TARGET_TPS*60*2 == 0){
+//                try {
+//                    airports.add(getNextAirport());
+//                } catch (Exception e) {
+//
+//                }
+//            }
 
             if(System.nanoTime() - startTime < OPTIMAL_TIME){
                 try{

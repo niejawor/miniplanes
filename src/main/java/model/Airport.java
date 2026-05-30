@@ -22,7 +22,9 @@ public class Airport {
     private final Shape shape;
     private final Point position;
     private final AirportType type;
-    private final GameEngine gameEngine;
+    //private final GameEngine gameEngine;
+
+    private final Updater updater;
 
     private final List<Passenger> passengers = new CopyOnWriteArrayList<>();
 
@@ -36,11 +38,11 @@ public class Airport {
     private int currentlyFreeLandingRunway = 0;
     private int currentlyFreeStartingRunway = 0;
 
-    public Airport(Shape shape, Point position, AirportType type, GameEngine engine) {
+    public Airport(Shape shape, Point position, AirportType type, Updater updater) {
         this.shape = shape;
         this.position = position;
         this.type = type;
-        gameEngine = engine;
+        this.updater = updater;
     }
 
     public Shape getShape() {
@@ -121,7 +123,8 @@ public class Airport {
         lastNewPassenger += deltaTime;
         if (lastNewPassenger >= newPassengerThreshold) {
             lastNewPassenger = 0;
-            gameEngine.generatePassenger(this);
+            updater.generatePassenger(this);
+            //this.addPassenger(new Passenger(shapeHandler.getRandomUsed()));
         }
     }
 
@@ -145,7 +148,7 @@ public class Airport {
         while (it.hasNext()) {
             if ((entry=it.next()).airplane.getTimeSpent() >= type.timeSpentTakingOff) {
                 if (entry.airplane.isValid()) entry.airplane.startNextJourney();
-                else gameEngine.getAirplanes().remove(entry.airplane);
+                else updater.getAirplanes().remove(entry.airplane);
                 startingAirplanes.remove(entry);
                 //it.remove();
             }

@@ -2,6 +2,7 @@ package model;
 
 import java.util.List;
 
+//TODO: move to VM
 public interface Event {
 
     //zwraca true jesli operacja sie powiodla
