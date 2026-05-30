@@ -3,14 +3,12 @@ package mainapplication;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import model.GameEngine;
 import view.Window;
 import viewmodel.GamePresenter;
 
 public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
-        GameEngine engine = new GameEngine();
         GamePresenter presenter = new GamePresenter();
 
         Window window = new Window(presenter);

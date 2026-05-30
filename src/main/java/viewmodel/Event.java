@@ -1,7 +1,6 @@
 package viewmodel;
 
 import model.Airport;
-import model.EventOld;
 import model.GameData;
 import model.Line;
 import model.Airplane;
