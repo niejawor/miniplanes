@@ -22,7 +22,6 @@ public class Airport {
     private final Shape shape;
     private final Point position;
     private final AirportType type;
-    //private final GameEngine gameEngine;
 
     private final Updater updater;
 

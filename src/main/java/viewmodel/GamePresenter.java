@@ -27,11 +27,6 @@ public class GamePresenter {
 
     public GamePresenter() {
         this.basicGameData = new BasicGameData();
-        //this.engine = engine;
-
-//        Thread engineThread = new Thread(() -> this.engine.Simulate());
-//        engineThread.setDaemon(true);
-//        engineThread.start();
 
         gameData = new GameData();
         updater = new Updater(gameData);
@@ -94,7 +89,6 @@ public class GamePresenter {
 
     public void createConfirmedRoute(List<Airport> routeAirports) {
         eventsQueue.add(new Event.AddLineEvent(gameData, routeAirports));
-        //engine.addEvent(new EventOld.AddLineEventOld(engine, routeAirports));
     }
 
 
@@ -126,11 +120,6 @@ public class GamePresenter {
 
         return true;
     }
-
-//    long timeInMinutes() {
-//        long timeInSeconds = time / 1000000000;
-//        return (int)(timeInSeconds*20);
-//    }
 
     public int getMinutes() {
         return (int)time.getInGameMinutes();
