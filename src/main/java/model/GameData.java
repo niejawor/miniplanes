@@ -9,7 +9,7 @@ public class GameData {
     private final List<Airport> airports = new CopyOnWriteArrayList<>();
     private final List<Airplane> airplanes = new CopyOnWriteArrayList<>();
     private final List<Line> lines = new CopyOnWriteArrayList<>();
-    private final Supplier<Airport> airportSupplier;// = new AirportSupplier(AirportListGenerator.generateAirports(this), null);
+    private Supplier<Airport> airportSupplier;// = new AirportSupplier(AirportListGenerator.generateAirports(this), null);
     private final EnumIterator<Shape> shapeHandler = new EnumIterator<>(Shape.class);
     Updater updater;
 
@@ -24,23 +24,28 @@ public class GameData {
 
     private final AtomicInteger totalTransportedPassengers;
 
-    GameData(Updater updater){
+    public GameData(){
         numberOfAvailableLines = new AtomicInteger(0);
         numberOfAvailableAirplanes = new AtomicInteger(0);
         totalTransportedPassengers = new AtomicInteger(0);
+        //this.updater = updater;
+        //airportSupplier = new AirportSupplier(AirportListGenerator.generateAirports(updater), null);
+    }
+
+    public void setUpdater(Updater updater) {
         this.updater = updater;
         airportSupplier = new AirportSupplier(AirportListGenerator.generateAirports(updater), null);
     }
 
-    List<Airport> getAirports(){
+    public List<Airport> getAirports(){
         return airports;
     }
 
-    List<Airplane> getAirplanes(){
+    public List<Airplane> getAirplanes(){
         return airplanes;
     }
 
-    List<Line> getLines(){
+    public List<Line> getLines(){
         return lines;
     }
 
@@ -52,11 +57,11 @@ public class GameData {
         return shapeHandler;
     }
 
-    int getNumberOfAvailableLines(){
+    public int getNumberOfAvailableLines(){
         return numberOfAvailableLines.get();
     }
 
-    int getNumberOfAvailableAirplanes(){
+    public int getNumberOfAvailableAirplanes(){
         return numberOfAvailableAirplanes.get();
     }
 
@@ -86,5 +91,14 @@ public class GameData {
 
     void incrementNumberOfAvailableAirplanes(){
         numberOfAvailableAirplanes.addAndGet(1);
+    }
+
+    public void addLine(Line line, Airplane airplane){
+        lines.add(line);
+        airplanes.add(airplane);
+    }
+
+    public void decrementNumberOfAvailableAirplanes() {
+        numberOfAvailableAirplanes.decrementAndGet();
     }
 }

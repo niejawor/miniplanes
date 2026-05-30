@@ -6,7 +6,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 // TODO: delete
 // vm uruchomi sobie na jednym watku simulate i to bedzie sobie na spokojnie chodzic, inforamcje o wszytkim bedzie mogla poobierac od gameengine za pomoca odpowiedniego gettera
@@ -18,7 +17,7 @@ public class GameEngine {
     //private final Supplier<Airport> airportSupplier = new AirportSupplier(AirportListGenerator.generateAirports(this), null);
     private final EnumIterator<Shape> shapeHandler = new EnumIterator<>(Shape.class);
 
-    private final Queue<Event> events = new ConcurrentLinkedQueue<>();
+    private final Queue<EventOld> eventOlds = new ConcurrentLinkedQueue<>();
 
     private final AtomicInteger numberOfAvailableLines;
     private final AtomicInteger numberOfAvailableAirplanes;
@@ -52,8 +51,8 @@ public class GameEngine {
 //    }
 
 
-    public void addEvent(Event e){
-        events.add(e);
+    public void addEvent(EventOld e){
+        eventOlds.add(e);
     } // za pomoca tego vm bedzie mogla dodawac eventy
 
     public int getCurrentTick(){
@@ -141,9 +140,9 @@ public class GameEngine {
             }
 
 
-            while(!events.isEmpty()){
-                Event event = events.poll();
-                event.handleEvent();
+            while(!eventOlds.isEmpty()){
+                EventOld eventOld = eventOlds.poll();
+                eventOld.handleEvent();
             }
             final int getTick = currentTick.get();
 

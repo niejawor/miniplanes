@@ -124,13 +124,17 @@ public class Window extends Pane {
             }
         });
 
-        AnimationTimer timer = new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                renderer.render(zoom, panX, panY);
-            }
-        };
-        timer.start();
+//        AnimationTimer timer = new AnimationTimer() {
+//            @Override
+//            public void handle(long now) {
+//                renderer.render(zoom, panX, panY);
+//            }
+//        };
+//        timer.start();
+    }
+
+    public void render() {
+        renderer.render(zoom, panX, panY);
     }
 
     private void applyZoom(double factor, double x, double y) {

@@ -3,18 +3,18 @@ package model;
 import java.util.List;
 
 //TODO: move to VM
-public interface Event {
+public interface EventOld {
 
     //zwraca true jesli operacja sie powiodla
     public boolean handleEvent();
 
     // prywatne klasy ktere implementuja ten interfejs odpowiedzialne za poszczegolny eventy
 
-    public final class AddLineEvent implements Event {
+    public final class AddLineEventOld implements EventOld {
         GameEngine engine;
         List<Airport> route;
 
-        public AddLineEvent(GameEngine engine, List<Airport> route) {
+        public AddLineEventOld(GameEngine engine, List<Airport> route) {
             this.engine = engine;
             this.route = route;
         }
@@ -42,11 +42,11 @@ public interface Event {
         }
     }
 
-    public final class RemoveLineEvent implements Event {
+    public final class RemoveLineEventOld implements EventOld {
         GameEngine engine;
         int lineId;
 
-        RemoveLineEvent(int lineId, GameEngine engine) {
+        RemoveLineEventOld(int lineId, GameEngine engine) {
             this.lineId = lineId;
             this.engine = engine;
         }
@@ -60,14 +60,14 @@ public interface Event {
         }
     }
 
-    public class EditLineAddEvent implements Event {
+    public class EditLineAddEventOld implements EventOld {
         GameEngine engine;
         int airportToAdd;
         int beforeAirport;
         int afterAirport;
         int lineId;
 
-        public EditLineAddEvent(int beforeAirport, int idOfAirportToAdd, int afterAirport, GameEngine engine, int lineId) {
+        public EditLineAddEventOld(int beforeAirport, int idOfAirportToAdd, int afterAirport, GameEngine engine, int lineId) {
             this.beforeAirport = beforeAirport;
             this.afterAirport = afterAirport;
             this.airportToAdd = idOfAirportToAdd;
@@ -98,13 +98,13 @@ public interface Event {
         }
     }
 
-    public class EditLineAddToEdgeEvent implements Event{
+    public class EditLineAddToEdgeEventOld implements EventOld {
         private final GameEngine engine;
         private final int lineId;
         private final int airportId;
         private final int edgeAirportId;
 
-        public EditLineAddToEdgeEvent(GameEngine engine, int lineId, int edgeAirportId, int airportId){
+        public EditLineAddToEdgeEventOld(GameEngine engine, int lineId, int edgeAirportId, int airportId){
             this.engine = engine;
             this.lineId = lineId;
             this.edgeAirportId = edgeAirportId;
@@ -129,12 +129,12 @@ public interface Event {
         }
     }
 
-    public class EditLineRemoveEvent implements Event {
+    public class EditLineRemoveEventOld implements EventOld {
         GameEngine engine;
         int airportToRemove;
         int lineId;
 
-        EditLineRemoveEvent(int airportToRemove, GameEngine engine, int lineId) {
+        EditLineRemoveEventOld(int airportToRemove, GameEngine engine, int lineId) {
             this.airportToRemove = airportToRemove;
             this.engine = engine;
             this.lineId = lineId;
@@ -143,16 +143,16 @@ public interface Event {
         @Override
         public boolean handleEvent() {
             if (!engine.getLines().get(lineId).delAirport(engine.getAirports().get(airportToRemove))) return false;
-            if (engine.getLines().get(lineId).size() <= 1) engine.addEvent(new RemoveLineEvent(lineId, engine));
+            if (engine.getLines().get(lineId).size() <= 1) engine.addEvent(new RemoveLineEventOld(lineId, engine));
             return true;
         }
     }
 
-    public class AddAirplaneEvent implements Event {
+    public class AddAirplaneEventOld implements EventOld {
         GameEngine engine;
         int lineId;
 
-        AddAirplaneEvent(int lineId, GameEngine engine) {
+        AddAirplaneEventOld(int lineId, GameEngine engine) {
             this.lineId = lineId;
             this.engine = engine;
         }
@@ -166,12 +166,12 @@ public interface Event {
         }
     }
 
-    public class RemoveAirplaneEvent implements Event {
+    public class RemoveAirplaneEventOld implements EventOld {
         GameEngine engine;
         int lineId;
         Airplane airplaneToRemove;
 
-        RemoveAirplaneEvent(int lineId, GameEngine engine, Airplane airplaneToRemove) {
+        RemoveAirplaneEventOld(int lineId, GameEngine engine, Airplane airplaneToRemove) {
             this.lineId = lineId;
             this.engine = engine;
             this.airplaneToRemove = airplaneToRemove;

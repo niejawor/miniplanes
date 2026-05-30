@@ -17,7 +17,7 @@ public class Updater {
 
 
 
-    Updater(GameData data) {
+    public Updater(GameData data) {
         this.data = data;
         currentTime.set(0);
     }
@@ -32,7 +32,7 @@ public class Updater {
 
 
 
-    class Result {
+    public class Result {
         int passengersTransported;
         int numberOfAddedLines;
         int numberOfAddedAirplanes;
@@ -52,6 +52,14 @@ public class Updater {
 
             this.airplanes = airplanes;
             this.lines = lines;
+        }
+
+        public boolean isItOver() {
+            return gameOver;
+        }
+
+        public int getPassengersTransported() {
+            return passengersTransported;
         }
 
     }

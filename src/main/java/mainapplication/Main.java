@@ -11,10 +11,12 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         GameEngine engine = new GameEngine();
-        GamePresenter presenter = new GamePresenter(engine);
+        GamePresenter presenter = new GamePresenter();
 
         Window window = new Window(presenter);
         Scene scene = new Scene(window, 1440, 810);
+
+        presenter.setWindow(window);
 
         window.requestFocus();
 
@@ -22,6 +24,8 @@ public class Main extends Application {
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
+
+
     }
 
     public static void main(String[] args) {

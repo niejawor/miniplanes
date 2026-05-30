@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Airplane {
-    final Line line;
-    int idx = 0;
+    public final Line line;
+    public int idx = 0;
     private boolean unloaded = false;
     private boolean loaded = false;
     private boolean flyingForward = true;
@@ -22,7 +22,7 @@ public class Airplane {
     private final List<Passenger> passengersOnBoard = new CopyOnWriteArrayList<>();
     private float timeSpent = 0;
 
-    Airplane(Line line, AirplaneType type) {
+    public Airplane(Line line, AirplaneType type) {
         this.line = line;
         position = line.get(0).getPosition();
         this.type = type;

@@ -46,7 +46,7 @@ public class LineEditor {
             selectedSegmentEnd = bestEnd;
             editing = true;
             hoverAirportIndex = -1;
-            presenter.pauseSimulation();
+            presenter.pauseGame();
             return true;
         }
         return false;
@@ -149,7 +149,7 @@ public class LineEditor {
         selectedSegmentStart = -1;
         selectedSegmentEnd = -1;
         hoverAirportIndex = -1;
-        presenter.resumeSimulation();
+        presenter.resumeGame();
     }
 
     private boolean airportOnLine(Line line, Airport airport) {
