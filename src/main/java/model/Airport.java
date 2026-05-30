@@ -22,6 +22,9 @@ public class Airport {
     private final Shape shape;
     private final Point position;
     private final AirportType type;
+    private final int index;
+
+    static int nextIndex = 0;
 
     private final Updater updater;
 
@@ -43,6 +46,7 @@ public class Airport {
         this.type = type;
         this.updater = updater;
         newPassengerThreshold.setInMinutes(300);
+        index = nextIndex++;
     }
 
     public Shape getShape() {

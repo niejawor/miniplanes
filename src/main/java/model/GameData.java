@@ -2,6 +2,7 @@ package model;
 
 import javafx.util.Pair;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -23,8 +24,10 @@ public class GameData {
 
     int maxOvercrowdedTime = 2; //in days
 
-    // klucz: krawedz z lotniska first do second, wartosc: first - suma czasow, sec - liczba pobranych danych zainicjalizowalbym na czas przelotu dystansu wprost 
+    // klucz: krawedz z lotniska first do second, wartosc: first - suma czasow, sec - liczba pobranych danych zainicjalizowalbym na czas przelotu dystansu wprost
     private HashMap<Pair<Integer, Integer>, Pair<Integer,Integer>> stats;
+
+    private HashMap<Integer, List<Integer>> bestNextStop;
 
     private final AtomicInteger totalTransportedPassengers;
 
