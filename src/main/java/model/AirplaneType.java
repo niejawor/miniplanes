@@ -1,8 +1,8 @@
 package model;
 
 public enum AirplaneType {
-    BigAirplane(8, 0.005f),
-    SmallAirplane(4, 0.01f);
+    BigAirplane(8, 0.000_000_000_0_1f),
+    SmallAirplane(4, 0.000_000_000_0_2f);
 
     final int capacity;
     final float speed;

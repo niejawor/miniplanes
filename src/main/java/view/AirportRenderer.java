@@ -52,12 +52,12 @@ public class AirportRenderer {
                 drawAirportInfrastructure(gc, airport, infraS, x, y, w, h);
 
                 for (Airport.AirplaneEntry entry : airport.getLandingAirplanes()) {
-                    double progress = entry.airplane.getTimeSpent() / airport.getAirportType().timeSpentLanding;
+                    double progress = entry.airplane.getTimeSpent().getCurrentTime() / airport.getAirportType().timeSpentLanding;
                     drawDynamicAirplane(gc, infraS, x, y, w, h, progress, true, entry.terminalIndex, airport.getAirportType().terminals);
                 }
 
                 for (Airport.AirplaneEntry entry : airport.getStartingAirplanes()) {
-                    double progress = entry.airplane.getTimeSpent() / airport.getAirportType().timeSpentTakingOff;
+                    double progress = entry.airplane.getTimeSpent().getCurrentTime() / airport.getAirportType().timeSpentTakingOff;
                     drawDynamicAirplane(gc, infraS, x, y, w, h, progress, false, entry.terminalIndex, airport.getAirportType().terminals);
                 }
 

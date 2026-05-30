@@ -43,6 +43,7 @@ public class Airport {
         this.position = position;
         this.type = type;
         this.updater = updater;
+        newPassengerThreshold.setInMinutes(300);
     }
 
     public Shape getShape() {
@@ -85,13 +86,13 @@ public class Airport {
         return passengers.size() > type.passengerCapacity;
     }
 
-    private float timeOverCrowded = 0;
-    private void updateOverCrowded(float deltaTime) {
-        if (isOverCrowded()) timeOverCrowded += deltaTime;
-        else timeOverCrowded = 0;
+    private Time timeOverCrowded = new Time(0);
+    private void updateOverCrowded(long deltaTime) {
+        if (isOverCrowded()) timeOverCrowded.addTime(deltaTime);
+        else timeOverCrowded.setCurrentTime(0);
     }
 
-    public float howLongOverCrowded() {
+    public Time howLongOverCrowded() {
         return timeOverCrowded;
     }
 
@@ -100,12 +101,12 @@ public class Airport {
         for (AirplaneEntry entry : parkedAirplanes) {
             Airplane a = entry.airplane;
 
-            if (!a.hasUnloaded() && a.getTimeSpent() >= 1.0f) {
+            if (!a.hasUnloaded() && a.getTimeSpent().getCurrentTime() >= 1.0f) {
                 x += a.unloadPassengers(this);
                 a.setUnloaded(true);
             }
 
-            if (!a.hasLoaded() && a.getTimeSpent() >= 2.0f) {
+            if (!a.hasLoaded() && a.getTimeSpent().getCurrentTime() >= 2.0f) {
                 passengers.removeIf(passenger -> {
                     if (passenger.wantsToBoard(a) && a.loadPassenger(passenger))
                         return true;
@@ -117,18 +118,18 @@ public class Airport {
         return x;
     }
 
-    private float lastNewPassenger = 0f;
-    private final float newPassengerThreshold = 5f;
-    private void generateNewPassengers(float deltaTime) {
-        lastNewPassenger += deltaTime;
-        if (lastNewPassenger >= newPassengerThreshold) {
-            lastNewPassenger = 0;
+    private Time lastNewPassenger = new Time(0);
+    private Time newPassengerThreshold = new Time(0);
+    private void generateNewPassengers(long deltaTime) {
+        lastNewPassenger.addTime(deltaTime);
+        if (lastNewPassenger.getInGameMinutes() >= newPassengerThreshold.getInGameMinutes()) {
+            lastNewPassenger.setCurrentTime(0);
             updater.generatePassenger(this);
             //this.addPassenger(new Passenger(shapeHandler.getRandomUsed()));
         }
     }
 
-    public int update(float deltaTime) {
+    public int update(long deltaTime) {
         finishTakeOffs();
         finishLandings();
 
@@ -146,7 +147,7 @@ public class Airport {
         Iterator<AirplaneEntry> it = startingAirplanes.iterator();
         AirplaneEntry entry;
         while (it.hasNext()) {
-            if ((entry=it.next()).airplane.getTimeSpent() >= type.timeSpentTakingOff) {
+            if ((entry=it.next()).airplane.getTimeSpent().getCurrentTime() >= type.timeSpentTakingOff) {
                 if (entry.airplane.isValid()) entry.airplane.startNextJourney();
                 else updater.getAirplanes().remove(entry.airplane);
                 startingAirplanes.remove(entry);
@@ -159,7 +160,7 @@ public class Airport {
         Iterator<AirplaneEntry> it = landingAirplanes.iterator();
         AirplaneEntry entry;
         while (it.hasNext()) {
-            if ((entry=it.next()).airplane.getTimeSpent() >= type.timeSpentLanding) {
+            if ((entry=it.next()).airplane.getTimeSpent().getCurrentTime() >= type.timeSpentLanding) {
                 parkedAirplanes.add(new AirplaneEntry(entry.airplane, currentlyFreeTerminal, currentlyFreeTerminal));
                 currentlyFreeTerminal += 1;
                 currentlyFreeTerminal %= type.terminals;

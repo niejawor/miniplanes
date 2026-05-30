@@ -20,7 +20,7 @@ public class Airplane {
     AirplaneType type;
 
     private final List<Passenger> passengersOnBoard = new CopyOnWriteArrayList<>();
-    private float timeSpent = 0;
+    private Time timeSpent = new Time(0);
 
     public Airplane(Line line, AirplaneType type) {
         this.line = line;
@@ -73,13 +73,13 @@ public class Airplane {
         return false;
     }
 
-    public void update(float deltaTime) {
-        timeSpent += deltaTime;
+    public void update(long deltaTime) {
+        timeSpent.addTime(deltaTime);
         if (currentlyFlying)
             moveTowardsTarget(deltaTime);
     }
 
-    private void moveTowardsTarget(float deltaTime) {
+    private void moveTowardsTarget(long deltaTime) {
         Airport target = line.get(idx);
         Point targetPos = target.getPosition();
 
@@ -87,7 +87,10 @@ public class Airplane {
         float dy = targetPos.getY() - position.getY();
         float distance = position.distance(targetPos);
 
+
         float moveDist = type.speed * deltaTime;
+
+        //System.out.println("moveDist: " + moveDist);
 
         if (distance <= moveDist) {
             position = targetPos;
@@ -100,7 +103,7 @@ public class Airplane {
 
     public void startNextJourney() {
         currentlyFlying = true;
-        timeSpent = 0;
+        timeSpent.setCurrentTime(0);
         prepareNextFlight();
     }
 
@@ -120,7 +123,7 @@ public class Airplane {
         }
     }
 
-    public float getTimeSpent() {
+    public Time getTimeSpent() {
         return timeSpent;
     }
 
@@ -129,15 +132,15 @@ public class Airplane {
     }
 
     public void startTakeOffProcedure() {
-        timeSpent = 0;
+        timeSpent.setCurrentTime(0);
     }
 
     public void startDockingProcedure() {
-        timeSpent = 0;
+        timeSpent.setCurrentTime(0);
     }
 
     public void startLandingProcedure() {
-        timeSpent = 0;
+        timeSpent.setCurrentTime(0);
     }
 
     public boolean isCurrentlyFlying() {

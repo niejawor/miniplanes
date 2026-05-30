@@ -17,10 +17,8 @@ public class GameData {
     private final AtomicInteger numberOfAvailableAirplanes;
     private final int limitOfLines = 7;
 
-    //TODO: delete
-    private final int TARGET_TPS = 90;
 
-    int maxOvercrowdedTime = TARGET_TPS*60*2;
+    int maxOvercrowdedTime = 2; //in days
 
     private final AtomicInteger totalTransportedPassengers;
 

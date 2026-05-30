@@ -9,17 +9,13 @@ public class Updater {
 
     GameData data;
 
-    //TODO: delete
-    private final int TARGET_TPS = 90;
+    private Time currentTime = new Time(0);
 
-    final AtomicInteger currentTime = new AtomicInteger(0);
-    private final int updateTime = TARGET_TPS*60*5; //co 5 minut
-
+    private final long weekTime = 7;
 
 
     public Updater(GameData data) {
         this.data = data;
-        currentTime.set(0);
     }
 
     void generatePassenger(Airport airport) {
@@ -70,14 +66,21 @@ public class Updater {
         return next;
     }
 
+    Time timeOfLastAirportAdded = new Time(0);
+    Time timeOfLastUpdate = new Time(0);
 
-    public Result update(int deltaTime){
-        currentTime.addAndGet(deltaTime);
+    public Result update(long deltaTime){
+
+        currentTime.addTime(deltaTime);
 
         int numberOfAddedLines = 0;
         int numberOfAddedAirplanes = 0;
 
-        if(currentTime.get() % updateTime == 0){
+        if(timeOfLastUpdate.getCurrentTime() == 0){
+            timeOfLastUpdate.setCurrentTime(timeOfLastUpdate.getCurrentTime());
+        }
+        else if(currentTime.getInGameDays() - timeOfLastUpdate.getInGameDays() > weekTime){
+            timeOfLastUpdate.setCurrentTime(timeOfLastUpdate.getCurrentTime());
             if(data.getNumberOfAvailableLines() < data.getLimitOfLines()){
                 data.incrementNumberOfAvailableLines();
                 numberOfAddedLines++;
@@ -88,26 +91,37 @@ public class Updater {
         }
 
         for(Airplane a: data.getAirplanes()){
-            a.update((float)1/TARGET_TPS);
+            a.update(deltaTime);
         }
 
         int temp = data.getTotalTransportedPassengers();
         for(Airport a: data.getAirports()){
-            data.addTotalTransportedPassengers(a.update((float)1/TARGET_TPS));
+            data.addTotalTransportedPassengers(a.update(deltaTime));
         }
 
         boolean gameOver = false;
         for(Airport a: data.getAirports()){
-            float temp2 = a.howLongOverCrowded();
-            if(temp2 > data.getMaxOvercrowdedTime()){
+            Time temp2 = a.howLongOverCrowded();
+            if(temp2.getInGameDays() > data.getMaxOvercrowdedTime()){
                 gameOver = true;
             }
         }
 
-        if(currentTime.get() % TARGET_TPS*60*2 == 0){
+        if(timeOfLastAirportAdded.getCurrentTime() == 0){
             try {
                 data.addAirport(getNextAirport());
+                data.addAirport(getNextAirport());
+                data.addAirport(getNextAirport());
+                timeOfLastAirportAdded.setCurrentTime(currentTime.getCurrentTime());
             } catch (Exception e) {}
+        }
+        else if(currentTime.getInGameHours() - timeOfLastAirportAdded.getInGameHours() > 8){
+            System.out.println("adding airport, time: " + currentTime.getInSeconds());
+            try {
+                data.addAirport(getNextAirport());
+                timeOfLastAirportAdded.setCurrentTime(currentTime.getCurrentTime());
+            }
+            catch (Exception e) {}
         }
 
         Result result = new Result(data.getAirports(), data.getAirplanes(), data.getLines(), numberOfAddedLines, numberOfAddedAirplanes, gameOver, data.getTotalTransportedPassengers() - temp);

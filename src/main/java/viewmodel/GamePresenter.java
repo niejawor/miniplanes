@@ -22,7 +22,7 @@ public class GamePresenter {
 
     int score = 0;
 
-    long time = 0;
+    Time time = new Time(0);
 
 
     public GamePresenter() {
@@ -58,9 +58,9 @@ public class GamePresenter {
                     return;
                 }
 
-                time += now - lastTime;
+                time.addTime(now - lastTime);
 
-                Updater.Result result = updater.update((int)(now - lastTime));
+                Updater.Result result = updater.update(now - lastTime);
                 lastTime = now;
 
                 score += result.getPassengersTransported();
@@ -127,16 +127,18 @@ public class GamePresenter {
         return true;
     }
 
-    long timeInMinutes() {
-        return (int)(time) / 6000000;
-    }
+//    long timeInMinutes() {
+//        long timeInSeconds = time / 1000000000;
+//        return (int)(timeInSeconds*20);
+//    }
 
     public int getMinutes() {
-        return (int)timeInMinutes();
+        return (int)time.getInGameMinutes();
     }
 
+
     public Weekdays getDay() {
-        long day = timeInMinutes()/(60*24);
+        long day = time.getInGameDays();
         return Weekdays.values()[(int)day%7];
     }
 
