@@ -96,7 +96,7 @@ public class Updater {
 
         int temp = data.getTotalTransportedPassengers();
         for(Airport a: data.getAirports()){
-            data.addTotalTransportedPassengers(a.update(deltaTime));
+            data.addTotalTransportedPassengers(a.update(deltaTime, data.stats));
         }
 
         boolean gameOver = false;

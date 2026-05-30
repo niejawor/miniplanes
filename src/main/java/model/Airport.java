@@ -1,10 +1,11 @@
 package model;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import javafx.util.Pair;
 
 public class Airport {
     public static class AirplaneEntry {
@@ -22,7 +23,7 @@ public class Airport {
     private final Shape shape;
     private final Point position;
     private final AirportType type;
-    private final int index;
+    final int index;
 
     static int nextIndex = 0;
 
@@ -99,20 +100,21 @@ public class Airport {
         return timeOverCrowded;
     }
 
-    private int processParkedAirplanes() {
+    private int processParkedAirplanes(HashMap<Pair<Integer, Airport>, Pair<Long, Long>> stats) {
         int x = 0;
         for (AirplaneEntry entry : parkedAirplanes) {
             Airplane a = entry.airplane;
 
             if (!a.hasUnloaded() && a.getTimeSpent().getCurrentTime() >= 1.0f) {
-                x += a.unloadPassengers(this);
+                x += a.unloadPassengers(this, stats);
                 a.setUnloaded(true);
             }
 
             if (!a.hasLoaded() && a.getTimeSpent().getCurrentTime() >= 2.0f) {
                 passengers.removeIf(passenger -> {
-                    if (passenger.wantsToBoard(a) && a.loadPassenger(passenger))
+                    if (passenger.wantsToBoard(a) && a.loadPassenger(passenger)) {
                         return true;
+                    }
                     return false;
                 });
                 a.setLoaded(true);
@@ -132,11 +134,11 @@ public class Airport {
         }
     }
 
-    public int update(long deltaTime) {
+    public int update(long deltaTime, HashMap<Pair<Integer, Airport>, Pair<Long, Long>> stats) {
         finishTakeOffs();
         finishLandings();
 
-        int x = processParkedAirplanes();
+        int x = processParkedAirplanes(stats);
 
         processNewTakeOffs();
         processNewLandings();

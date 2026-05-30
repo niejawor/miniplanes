@@ -1,7 +1,7 @@
 package model;
 
 public class Passenger {
-    Shape destination;
+    final Shape destination;
 
     public Passenger(Shape destination) {
         this.destination = destination;

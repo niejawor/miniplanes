@@ -1,9 +1,8 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import javafx.util.Pair;
+
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Airplane {
@@ -28,6 +27,8 @@ public class Airplane {
         this.type = type;
     }
 
+    public Airport getOrigin() { return line.get(idx + (flyingForward ? -1 : 1)); }
+
     public Airport getDestination() {
         return line.get(idx);
     }
@@ -50,8 +51,14 @@ public class Airplane {
             val++;
         }
     };
-    public int unloadPassengers(Airport airport) {
+    public int unloadPassengers(Airport airport, HashMap<Pair<Integer, Airport>, Pair<Long, Long>> stats) {
         final IntBox nPassengers = new IntBox();
+        final int pass = passengersOnBoard.size();
+
+        stats.compute(new Pair<>(getOrigin().index, getDestination()),
+                (k, stat) ->
+                        new Pair<>((stat != null ? stat.getKey() : 0) + pass*timeSpent.getCurrentTime(), (stat != null ? stat.getValue() : 0) + pass));
+
         passengersOnBoard.removeIf(passenger -> {
             if (passenger.destination == airport.getShape()) {
                 nPassengers.inc();
