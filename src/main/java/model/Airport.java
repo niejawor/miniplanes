@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Airport {
+
     public static class AirplaneEntry {
         public int index;          // Terminal dla zaparkowanych, numer pasa startowego dla startujących i numer pasa lądowania dla lądujących
         public int terminalIndex;
@@ -47,6 +48,25 @@ public class Airport {
         this.updater = updater;
         newPassengerThreshold.setInMinutes(300);
         index = nextIndex++;
+    }
+
+    public Airport(Airport airport) {
+        this.shape = airport.shape;
+        this.position = airport.position;
+        this.type = airport.type;
+        this.updater = airport.updater;
+        this.passengers.addAll(airport.passengers);
+        this.queuedAirplanes.addAll(airport.queuedAirplanes);
+        this.landingAirplanes.addAll(airport.landingAirplanes);
+        this.startingAirplanes.addAll(airport.startingAirplanes);
+        this.currentlyFreeTerminal = airport.currentlyFreeTerminal;
+        this.currentlyFreeLandingRunway = airport.currentlyFreeLandingRunway;
+        this.currentlyFreeStartingRunway = airport.currentlyFreeStartingRunway;
+        this.index = airport.index;
+    }
+
+    public int getIndex() {
+        return index;
     }
 
     public Shape getShape() {

@@ -24,6 +24,10 @@ public final class Line {
         return path.get(idx);
     }
 
+    public LinkedList<Airport> getPath(){
+        return path;
+    }
+
     public boolean addAirportBetween(Airport a, Airport b, Airport nowy) {
         int counter = 0;
         for (Airport airport : path){

@@ -5,6 +5,7 @@ import javafx.util.Pair;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -25,7 +26,7 @@ public class GameData {
     int maxOvercrowdedTime = 2; //in days
 
     // klucz: krawedz z lotniska first do second, wartosc: first - suma czasow, sec - liczba pobranych danych zainicjalizowalbym na czas przelotu dystansu wprost
-    private HashMap<Pair<Integer, Integer>, Pair<Integer,Integer>> stats;
+    private HashMap<Pair<Integer, Airport>, Pair<Integer,Integer>> stats;
 
     private HashMap<Integer, List<Integer>> bestNextStop;
 
@@ -35,8 +36,6 @@ public class GameData {
         numberOfAvailableLines = new AtomicInteger(0);
         numberOfAvailableAirplanes = new AtomicInteger(0);
         totalTransportedPassengers = new AtomicInteger(0);
-        //this.updater = updater;
-        //airportSupplier = new AirportSupplier(AirportListGenerator.generateAirports(updater), null);
     }
 
     public void setUpdater(Updater updater) {
@@ -46,6 +45,17 @@ public class GameData {
 
     public List<Airport> getAirports(){
         return airports;
+    }
+
+    public HashMap<Pair<Integer, Airport>, Pair<Integer, Integer>> getStats() {
+        return stats;
+    }
+
+    public void setBestNextStop(HashMap<Integer,List<Integer>> bestNextStop) {
+        this.bestNextStop.clear();
+        for(Map.Entry<Integer,List<Integer>> entry : bestNextStop.entrySet()){
+            this.bestNextStop.put(entry.getKey(), entry.getValue());
+        }
     }
 
     public List<Airplane> getAirplanes(){
@@ -86,6 +96,7 @@ public class GameData {
 
     void addAirport(Airport airport){
         airports.add(airport);
+        bestNextStop.put(airport.getIndex(), new ArrayList<>(8));
     }
 
     int getLimitOfLines(){
