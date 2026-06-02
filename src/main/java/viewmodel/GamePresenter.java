@@ -23,6 +23,9 @@ public class GamePresenter {
     int score = 0;
 
     Time time = new Time(0);
+    private static final long REWARD_POPUP_INTERVAL_NANOS = 30_000_000_000L;
+    private long lastRewardPopupTime = 0;
+    private boolean rewardPopupOpen = false;
 
 
     public GamePresenter() {
@@ -50,8 +53,11 @@ public class GamePresenter {
                 processEvents();
 
                 if(gameOver || paused){
+                    lastTime = now;
                     return;
                 }
+
+                maybeShowRewardPopup(now);
 
                 time.addTime(now - lastTime);
 
@@ -72,6 +78,7 @@ public class GamePresenter {
     public void processEvents(){
         if(eventsQueue.isEmpty()){return;}
 
+        boolean processedAnyEvent = false;
         while(!eventsQueue.isEmpty()){
             Event event = eventsQueue.poll();
             if(event == null){
@@ -79,6 +86,11 @@ public class GamePresenter {
             }
 
             event.handleEvent();
+            processedAnyEvent = true;
+        }
+
+        if (processedAnyEvent && window != null) {
+            window.refreshNavbar();
         }
     }
 
@@ -87,8 +99,24 @@ public class GamePresenter {
     public List<Airplane> getAirplanes() { return gameData.getAirplanes(); }
     public List<Line> getLines() { return gameData.getLines(); }
 
-    public void createConfirmedRoute(List<Airport> routeAirports) {
-        eventsQueue.add(new Event.AddLineEvent(gameData, routeAirports));
+    public List<Color> getPalette() { return gameData.getPalette(); }
+    public int getAvailableAirplanes() { return gameData.getNumberOfAvailableAirplanes(); }
+
+    public void createConfirmedRoute(List<Airport> routeAirports, Color color) {
+        eventsQueue.add(new Event.AddLineEvent(gameData, routeAirports, color));
+    }
+
+    public void addAirplaneToLine(int lineId, int airportId) {
+        if (lineId < 0 || lineId >= gameData.getLines().size()) return;
+        if (airportId < 0 || airportId >= gameData.getAirports().size()) return;
+        eventsQueue.add(new Event.AddAirplaneToLineEvent(gameData, lineId, airportId));
+    }
+
+    public boolean removeAirportFromLine(int lineId, int airportId) {
+        if (lineId < 0 || lineId >= gameData.getLines().size()) return false;
+        if (airportId < 0 || airportId >= gameData.getAirports().size()) return false;
+        eventsQueue.add(new Event.EditLineRemoveEvent(airportId, gameData, lineId));
+        return true;
     }
 
 
@@ -111,11 +139,12 @@ public class GamePresenter {
         return true;
     }
 
-    public boolean addAirportToLineEdge(int lineId, int airportId, int edgeAirportId) {
+    public boolean addAirportToLineEdge(int lineId, int newAirportId, int edgeAirportId) {
         if (lineId < 0 || lineId >= gameData.getLines().size()) return false;
+        if (newAirportId < 0 || newAirportId >= gameData.getAirports().size()) return false;
 
         eventsQueue.add(
-          new Event.EditLineAddToEdgeEvent(gameData, lineId, airportId, edgeAirportId)
+          new Event.EditLineAddToEdgeEvent(gameData, lineId, edgeAirportId, newAirportId)
         );
 
         return true;
@@ -133,5 +162,42 @@ public class GamePresenter {
 
     public int getResult() {
         return score;
+    }
+
+    public void chooseLineReward() {
+        gameData.unlockNextLineColor();
+        rewardPopupOpen = false;
+        resumeGame();
+        if (window != null) window.refreshNavbar();
+    }
+
+    public void chooseAirplaneReward() {
+        gameData.addAvailableAirplane();
+        rewardPopupOpen = false;
+        resumeGame();
+        if (window != null) window.refreshNavbar();
+    }
+
+    public void skipReward() {
+        rewardPopupOpen = false;
+        resumeGame();
+    }
+
+    private void maybeShowRewardPopup(long now) {
+        if (rewardPopupOpen || window == null) {
+            return;
+        }
+        if (lastRewardPopupTime == 0) {
+            lastRewardPopupTime = now;
+            return;
+        }
+        if (now - lastRewardPopupTime < REWARD_POPUP_INTERVAL_NANOS) {
+            return;
+        }
+
+        lastRewardPopupTime = now;
+        rewardPopupOpen = true;
+        pauseGame();
+        window.showRewardPopup(gameData.getNextLockedLineColor());
     }
 }

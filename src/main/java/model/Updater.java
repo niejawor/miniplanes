@@ -76,20 +76,6 @@ public class Updater {
         int numberOfAddedLines = 0;
         int numberOfAddedAirplanes = 0;
 
-        if(timeOfLastUpdate.getCurrentTime() == 0){
-            timeOfLastUpdate.setCurrentTime(timeOfLastUpdate.getCurrentTime());
-        }
-        else if(currentTime.getInGameDays() - timeOfLastUpdate.getInGameDays() > weekTime){
-            timeOfLastUpdate.setCurrentTime(timeOfLastUpdate.getCurrentTime());
-            if(data.getNumberOfAvailableLines() < data.getLimitOfLines()){
-                data.incrementNumberOfAvailableLines();
-                numberOfAddedLines++;
-            }
-
-            data.incrementNumberOfAvailableAirplanes();
-            numberOfAddedAirplanes++;
-        }
-
         for(Airplane a: data.getAirplanes()){
             a.update(deltaTime);
         }
