@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Dolny pasek nawigacyjny (jak w mini metro): pozwala wybrac kolor linii,
+ * Dolny pasek nawigacyjny pozwala wybrac kolor linii,
  * ktora chcemy narysowac oraz wlaczyc tryb dodawania samolotu do istniejacej linii.
  */
 public class Navbar extends HBox {
@@ -41,7 +41,6 @@ public class Navbar extends HBox {
         this.availableAirplanes = availableAirplanes;
         build();
 
-        // Zdarzenia myszy/scrolla na pasku nie moga przeciekac do plotna gry pod spodem.
         addEventHandler(MouseEvent.MOUSE_PRESSED, Event::consume);
         addEventHandler(MouseEvent.MOUSE_RELEASED, Event::consume);
         addEventHandler(MouseEvent.MOUSE_CLICKED, Event::consume);
