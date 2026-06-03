@@ -30,6 +30,7 @@ public class GamePresenter {
     private long lastRewardPopupTime = 0;
     private boolean rewardPopupOpen = false;
 
+    //pamietac o zamknieciu kiedy bedzie game over
     private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
 
 
@@ -78,7 +79,7 @@ public class GamePresenter {
                     gameOver = true;
                 }
 
-                if(lastPathsUpdate.getCurrentTime() == 0 || time.getInSeconds() - lastPathsUpdate.getInSeconds() > 5){
+                if(lastPathsUpdate.getCurrentTime() == 0 || time.getInSeconds() - lastPathsUpdate.getInSeconds() > 1){
                     lastPathsUpdate.setCurrentTime(time.getCurrentTime());
                     if(!dijkstraRunning){
                         triggerPathRefresh();
@@ -120,7 +121,7 @@ public class GamePresenter {
 
 
         backgroundExecutor.submit(() -> {
-            HashMap<Integer, List<List<Integer>>> result = performPathFinder(statsCopy,copyLinePaths,airportsCopy,airportShapes);
+            HashMap<Integer, List<List<Integer>>> result = updater.performPathFinder(statsCopy,copyLinePaths,airportsCopy,airportShapes);
 
             Platform.runLater(()->{
                 gameData.setBestNextStop(result);
@@ -129,147 +130,6 @@ public class GamePresenter {
         });
     }
 
-    // to trzeba przeniesc gdzies do backendu - np do gameData?
-    public HashMap<Integer, List<List<Integer>>> performPathFinder(HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> stats, List<ArrayList<Integer>> lines, List<Integer> airports, HashMap<Integer, Shape> airportShapes){
-        HashMap<Integer, List<Pair<Integer, Float>>> graph = new HashMap<>(); // airport -> index
-        HashMap<Integer, List<List<Integer>>> result = new HashMap<>();
-
-        for(Integer airport : airports){ // indeksy lotnisk
-            graph.putIfAbsent(airport, new ArrayList<>());
-        }
-
-        HashMap<Pair<Integer, Integer>, Boolean> isInLines = new HashMap<>();
-
-        for(ArrayList<Integer> linePath : lines){
-
-            // co z pustymi ?
-            Integer previousAirport = linePath.getFirst(); // puste!, potrzebujemy tylko indeksy kolejnych krawedzi
-            for(Integer airport : linePath){
-                if(Objects.equals(previousAirport, airport)){
-                    continue;
-                }
-
-                isInLines.put(new Pair<>(previousAirport, airport), true);
-                previousAirport = airport;
-            }
-
-            previousAirport = linePath.getLast(); // znowu pusty?
-            for (Integer airport : linePath.reversed()) {
-                if(Objects.equals(previousAirport, airport)){
-                    continue;
-                }
-
-                isInLines.put(new Pair<>(previousAirport, airport), true);
-                previousAirport = airport;
-            }
-
-        }
-
-
-        for(Map.Entry<Pair<Integer, Integer>, Pair<Integer, Integer>> info : stats.entrySet()){
-            if(!isInLines.containsKey(info.getKey())){
-                continue;
-            }
-
-            graph.get(info.getKey().getKey()).add(new Pair<>(
-                    info.getKey().getValue(), (float)info.getValue().getKey()/(float)info.getValue().getValue()
-            ));
-        }
-
-        for(Integer airport : airports){
-            result.put(airport, DijkstraShortestPath(airport, graph, airports, airportShapes));
-        }
-
-        return result;
-    }
-
-    List<List<Integer>> DijkstraShortestPath(Integer start, HashMap<Integer, List<Pair<Integer, Float>>> graph, List<Integer> airports, HashMap<Integer, Shape> airportShapes){
-        List<List<Integer>> result = new ArrayList<>();
-
-        HashMap<Integer, Float> dist = new HashMap<>();
-        HashMap<Integer, Integer> prev = new HashMap<>();
-
-        for(Integer airport : airports){
-            dist.put(airport, 1000_000_000_000f);
-            prev.put(airport, airport);
-        }
-
-        dist.put(start, 0.0f);
-
-        // pary lotnisko , odleglosc
-        PriorityQueue<Pair<Integer,Float>> priorityQueue = new PriorityQueue<>(Comparator.comparingDouble(Pair::getValue));
-        priorityQueue.add(new Pair<>(start,0.0f));
-
-
-        while(!priorityQueue.isEmpty()){
-            Pair<Integer,Float> pair = priorityQueue.poll();
-
-            Float sugestedDistance = pair.getValue();
-            Float distance = dist.get(pair.getKey());
-            if(sugestedDistance > distance){
-                continue;
-            }
-
-            for(Pair<Integer, Float> edge : graph.get(pair.getKey())){
-                Float newDistance = dist.get(pair.getKey()) + edge.getValue();
-                if(newDistance < dist.get(edge.getKey())){
-                    dist.put(edge.getKey(), newDistance);
-                    prev.put(edge.getKey(), pair.getKey());
-                    priorityQueue.add(new Pair<>(edge.getKey(), newDistance));
-                }
-            }
-
-        }
-
-        Integer min;
-        for(int i=0;i<Shape.values().length;i++){
-            min = null;
-
-            for(Map.Entry<Integer, Float> entry : dist.entrySet()){
-                if(airportShapes.get(entry.getKey()) != Shape.values()[i]){
-                    continue;
-                }
-
-                if(min == null){
-                    min = entry.getKey();
-                }
-                else if(dist.get(min) > entry.getValue()){
-                    min = entry.getKey();
-                }
-
-            }
-
-            List<Integer> temp = new ArrayList<>();
-            if(min == null) {
-                temp.add(start);
-                result.add(temp);
-                continue;
-            }
-
-            Integer prevAirport = min;
-            while(!Objects.equals(prev.get(prevAirport), start)){
-                if(Objects.equals(prevAirport, prev.get(prevAirport))){
-                    break;
-                }
-                prevAirport = prev.get(prevAirport);
-            }
-            temp.add(prevAirport);
-
-
-            for(Map.Entry<Integer, Float> entry : dist.entrySet()){
-                if(airportShapes.get(entry.getKey()) != Shape.values()[i]){
-                    continue;
-                }
-                if(dist.get(min)*2.5 >= entry.getValue()){
-                    temp.add(entry.getKey());
-                }
-            }
-
-            result.add(temp);
-        }
-
-        return result;
-    }
 
     public void processEvents(){
         if(eventsQueue.isEmpty()){return;}
