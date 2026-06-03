@@ -83,81 +83,78 @@ public class GamePresenter {
     }
 
     public void triggerPathRefresh(){
-        Map<Integer, Airport> deepClonedAirportsMap = gameData.getAirports().stream()
-                .collect(Collectors.toMap(
-                        Airport::getIndex,
-                        airport -> new Airport(airport)
-                ));
+        HashMap<Pair<Integer,Integer>,Pair<Integer,Integer>> statsCopy = new HashMap<>(gameData.getStats());
+        List<ArrayList<Integer>> copyLinePaths =  new ArrayList<>();
 
-        List<Airport> airportsCopy = deepClonedAirportsMap.values().stream()
-                .toList();
+        for(Line line: gameData.getLines()){
+            if(line.getPath().size()<2){
+                continue;
+            }
 
-       List<ArrayList<Airport>> safeLinePaths = gameData.getLines().stream()
-                .map(line -> line.getPath().stream()
-                        .map(airport -> deepClonedAirportsMap.get(airport.getIndex()))
-                        .collect(Collectors.toCollection(ArrayList::new))
-                ).toList();
+            copyLinePaths.add(new ArrayList<>());
+            for(Airport airport: line.getPath()){
+                copyLinePaths.getLast().add(airport.getIndex());
+            }
 
-       HashMap<Pair<Integer, Airport>, Pair<Integer, Integer>> statsCopy = gameData.getStats().entrySet().stream()
-                .collect(Collectors.toMap(
-                        entry -> new Pair<>(
-                                entry.getKey().getKey(),
-                                deepClonedAirportsMap.get(entry.getKey().getValue().getIndex())
-                        ),
-                        entry -> new Pair<>(
-                                entry.getValue().getKey(),
-                                entry.getValue().getValue()
-                        ),
-                        (staraWartosc, nowaWartosc) -> staraWartosc,
-                        HashMap::new
-                ));
+        }
 
-       backgroundExecutor.submit(() -> {
-            HashMap<Integer, List<Integer>> result = performPathFinder(statsCopy,safeLinePaths,airportsCopy);
+        List<Integer> airportsCopy = new ArrayList<>();
+        for (Airport airport: gameData.getAirports()){
+            airportsCopy.add(airport.getIndex());
+        }
+
+        HashMap<Integer,Shape> airportShapes = new HashMap<>();
+        for (Airport airport: gameData.getAirports()){
+            airportShapes.put(airport.getIndex(), airport.getShape());
+        }
+
+
+        backgroundExecutor.submit(() -> {
+            HashMap<Integer, List<Integer>> result = performPathFinder(statsCopy,copyLinePaths,airportsCopy,airportShapes);
 
             Platform.runLater(()->{
                 gameData.setBestNextStop(result);
             });
-       });
+        });
     }
 
-    public HashMap<Integer, List<Integer>> performPathFinder(HashMap<Pair<Integer, Airport>, Pair<Integer, Integer>> stats, List<ArrayList<Airport>> lines, List<Airport> airports){
-        HashMap<Integer, List<Pair<Airport, Float>>> graph = new HashMap<>();
+    public HashMap<Integer, List<Integer>> performPathFinder(HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> stats, List<ArrayList<Integer>> lines, List<Integer> airports, HashMap<Integer, Shape> airportShapes){
+        HashMap<Integer, List<Pair<Integer, Float>>> graph = new HashMap<>(); // airport -> index
         HashMap<Integer, List<Integer>> result = new HashMap<>();
 
-        for(Airport airport : airports){
-            graph.putIfAbsent(airport.getIndex(), new ArrayList<>());
+        for(Integer airport : airports){ // indeksy lotnisk
+            graph.putIfAbsent(airport, new ArrayList<>());
         }
 
-        HashMap<Pair<Integer, Airport>, Boolean> isInLines = new HashMap<>();
+        HashMap<Pair<Integer, Integer>, Boolean> isInLines = new HashMap<>();
 
-        for(ArrayList<Airport> linePath : lines){
+        for(ArrayList<Integer> linePath : lines){
 
-            // co z pustymi ? 
-            Airport previousAirport = linePath.get(0);
-            for(Airport airport : linePath){
-                if(previousAirport == airport){
+            // co z pustymi ?
+            Integer previousAirport = linePath.getFirst(); // puste!, potrzebujemy tylko indeksy kolejnych krawedzi
+            for(Integer airport : linePath){
+                if(Objects.equals(previousAirport, airport)){
                     continue;
                 }
 
-                isInLines.put(new Pair<>(previousAirport.getIndex(), airport), true);
+                isInLines.put(new Pair<>(previousAirport, airport), true);
                 previousAirport = airport;
             }
 
-            previousAirport = linePath.get(linePath.size()-1);
-            for (Airport airport : linePath.reversed()) {
-                if(previousAirport == airport){
+            previousAirport = linePath.getLast(); // znowu pusty?
+            for (Integer airport : linePath.reversed()) {
+                if(Objects.equals(previousAirport, airport)){
                     continue;
                 }
 
-                isInLines.put(new Pair<>(previousAirport.getIndex(), airport), true);
+                isInLines.put(new Pair<>(previousAirport, airport), true);
                 previousAirport = airport;
             }
 
         }
 
 
-        for(Map.Entry<Pair<Integer, Airport>, Pair<Integer, Integer>> info : stats.entrySet()){
+        for(Map.Entry<Pair<Integer, Integer>, Pair<Integer, Integer>> info : stats.entrySet()){
             if(!isInLines.containsKey(info.getKey())){
                 continue;
             }
@@ -167,20 +164,20 @@ public class GamePresenter {
             ));
         }
 
-        for(Airport airport : airports){
-            result.put(airport.getIndex(), DijkstraShortestPath(airport, graph, airports));
+        for(Integer airport : airports){
+            result.put(airport, DijkstraShortestPath(airport, graph, airports, airportShapes));
         }
 
         return result;
     }
 
-    List<Integer> DijkstraShortestPath(Airport start, HashMap<Integer, List<Pair<Airport, Float>>> graph, List<Airport> airports){
+    List<Integer> DijkstraShortestPath(Integer start, HashMap<Integer, List<Pair<Integer, Float>>> graph, List<Integer> airports, HashMap<Integer, Shape> airportShapes){
         List<Integer> result = new ArrayList<>();
 
-        HashMap<Airport, Float> dist = new HashMap<>();
-        HashMap<Airport, Airport> prev = new HashMap<>();
+        HashMap<Integer, Float> dist = new HashMap<>();
+        HashMap<Integer, Integer> prev = new HashMap<>();
 
-        for(Airport airport : airports){
+        for(Integer airport : airports){
             dist.put(airport, 1000_000_000_000f);
             prev.put(airport, airport);
         }
@@ -188,12 +185,12 @@ public class GamePresenter {
         dist.put(start, 0.0f);
 
         // pary lotnisko , odleglosc
-        PriorityQueue<Pair<Airport,Float>> priorityQueue = new PriorityQueue<>(Comparator.comparingDouble(Pair::getValue));
+        PriorityQueue<Pair<Integer,Float>> priorityQueue = new PriorityQueue<>(Comparator.comparingDouble(Pair::getValue));
         priorityQueue.add(new Pair<>(start,0.0f));
 
 
         while(!priorityQueue.isEmpty()){
-            Pair<Airport,Float> pair = priorityQueue.poll();
+            Pair<Integer,Float> pair = priorityQueue.poll();
 
             Float sugestedDistance = pair.getValue();
             Float distance = dist.get(pair.getKey());
@@ -201,7 +198,7 @@ public class GamePresenter {
                 continue;
             }
 
-            for(Pair<Airport, Float> edge : graph.get(pair.getKey().getIndex())){
+            for(Pair<Integer, Float> edge : graph.get(pair.getKey())){
                 Float newDistance = dist.get(pair.getKey()) + edge.getValue();
                 if(newDistance < dist.get(edge.getKey())){
                     dist.put(edge.getKey(), newDistance);
@@ -212,11 +209,12 @@ public class GamePresenter {
 
         }
 
-        Airport min = null;
-        for(int i=0;i<8;i++){
+        Integer min;
+        for(int i=0;i<Shape.values().length;i++){
+            min = null;
 
-            for(Map.Entry<Airport, Float> entry : dist.entrySet()){
-                if(entry.getKey().getShape() != Shape.values()[i]){
+            for(Map.Entry<Integer, Float> entry : dist.entrySet()){
+                if(airportShapes.get(entry.getKey()) != Shape.values()[i]){
                     continue;
                 }
 
@@ -229,16 +227,20 @@ public class GamePresenter {
 
             }
 
-            Airport prevAirport = min;
-            while(start.getIndex() != prev.get(prevAirport).getIndex()){
-                if(prevAirport == prev.get(prevAirport)){
+            if(min == null){
+                result.add(start);
+                continue;
+            }
+
+            Integer prevAirport = min;
+            while(!Objects.equals(prev.get(prevAirport), start)){
+                if(Objects.equals(prevAirport, prev.get(prevAirport))){
                     break;
                 }
                 prevAirport = prev.get(prevAirport);
             }
-            if(min == null){min = start;}
 
-            result.add(prevAirport.getIndex());
+            result.add(prevAirport);
         }
 
         return  result;

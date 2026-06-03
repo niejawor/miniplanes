@@ -26,9 +26,9 @@ public class GameData {
     int maxOvercrowdedTime = 2; //in days
 
     // klucz: krawedz z lotniska first do second, wartosc: first - suma czasow, sec - liczba pobranych danych zainicjalizowalbym na czas przelotu dystansu wprost
-    private HashMap<Pair<Integer, Airport>, Pair<Integer,Integer>> stats;
+    private HashMap<Pair<Integer, Integer>, Pair<Integer,Integer>> stats = new HashMap<>();
 
-    private HashMap<Integer, List<Integer>> bestNextStop;
+    private HashMap<Integer, List<Integer>> bestNextStop = new HashMap<>();
 
     private final AtomicInteger totalTransportedPassengers;
 
@@ -47,15 +47,13 @@ public class GameData {
         return airports;
     }
 
-    public HashMap<Pair<Integer, Airport>, Pair<Integer, Integer>> getStats() {
+    public HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> getStats() {
         return stats;
     }
 
     public void setBestNextStop(HashMap<Integer,List<Integer>> bestNextStop) {
         this.bestNextStop.clear();
-        for(Map.Entry<Integer,List<Integer>> entry : bestNextStop.entrySet()){
-            this.bestNextStop.put(entry.getKey(), entry.getValue());
-        }
+        this.bestNextStop.putAll(bestNextStop);
     }
 
     public List<Airplane> getAirplanes(){
