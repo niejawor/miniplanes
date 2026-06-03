@@ -21,6 +21,10 @@ public final class Line {
         return path.get(idx);
     }
 
+    public LinkedList<Airport> getPath(){
+        return path;
+    }
+  
     public int indexOf(Airport airport) {
         int counter = 0;
         for (Airport a : path) {

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -36,9 +37,9 @@ public class GameData {
     int maxOvercrowdedTime = 2; //in days
 
     // klucz: krawedz z lotniska first do second, wartosc: first - suma czasow, sec - liczba pobranych danych zainicjalizowalbym na czas przelotu dystansu wprost
-    HashMap<Pair<Integer, Airport>, Pair<Long,Long>> stats = new HashMap<>();
+    private HashMap<Pair<Integer, Integer>, Pair<Integer,Integer>> stats = new HashMap<>();
 
-    private HashMap<Integer, List<Integer>> bestNextStop;
+    private HashMap<Integer, List<Integer>> bestNextStop = new HashMap<>();
 
     private final AtomicInteger totalTransportedPassengers;
 
@@ -60,6 +61,15 @@ public class GameData {
 
     public List<Airport> getAirports(){
         return airports;
+    }
+
+    public HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> getStats() {
+        return stats;
+    }
+
+    public void setBestNextStop(HashMap<Integer,List<Integer>> bestNextStop) {
+        this.bestNextStop.clear();
+        this.bestNextStop.putAll(bestNextStop);
     }
 
     public List<Airplane> getAirplanes(){
@@ -119,6 +129,7 @@ public class GameData {
 
     void addAirport(Airport airport){
         airports.add(airport);
+        bestNextStop.put(airport.getIndex(), new ArrayList<>(8));
     }
 
     int getLimitOfLines(){
