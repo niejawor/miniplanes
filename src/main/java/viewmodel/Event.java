@@ -5,6 +5,7 @@ import model.GameData;
 import model.Line;
 import model.Airplane;
 import model.AirplaneType;
+import model.Color;
 
 import java.util.List;
 
@@ -18,21 +19,31 @@ public interface Event {
     public final class AddLineEvent implements Event {
         GameData gameData;
         List<Airport> route;
+        Color color;
 
-        public AddLineEvent(GameData gameData, List<Airport> route) {
+        public AddLineEvent(GameData gameData, List<Airport> route, Color color) {
             this.gameData = gameData;
             this.route = route;
+            this.color = color;
         }
 
         @Override
         public boolean handleEvent() {
-//            if(engine.get_number_of_available_lines() == 0 || engine.get_number_of_available_airplanes() == 0){
-//                return false;
-//            }
-//            engine.decrement_number_of_available_lines();
-//            engine.decrement_number_of_available_airplanes();
+            if (route == null || route.size() < 2) {
+                return false;
+            }
+            if (!gameData.getPalette().contains(color) || !gameData.canAddLine(route)) {
+                return false;
+            }
 
-            Line newLine = new Line(route.get(0), route.get(1));
+            // Kazdy kolor to dokladnie jedna linia - nie tworzymy duplikatu.
+            for (Line existing : gameData.getLines()) {
+                if (existing.color == color) {
+                    return false;
+                }
+            }
+
+            Line newLine = new Line(route.get(0), route.get(1), color);
 
             for (int i = 2; i < route.size(); i++) {
                 newLine.addAirportToEdge(route.get(i - 1), route.get(i));
@@ -58,9 +69,16 @@ public interface Event {
 
         @Override
         public boolean handleEvent() {
+            if (lineId < 0 || lineId >= gameData.getLines().size()) return false;
             Line line = gameData.getLines().remove(lineId);
-            for (Airplane airplane : gameData.getAirplanes())
-                if (airplane.line == line) airplane.setInvalid();
+            for (Airplane airplane : gameData.getAirplanes()) {
+                if (airplane.line == line) {
+                    if (airplane.shouldReturnToPoolWhenRemoved()) {
+                        gameData.addAvailableAirplane();
+                    }
+                    airplane.setInvalid();
+                }
+            }
             return true;
         }
     }
@@ -91,7 +109,11 @@ public interface Event {
                     break;
                 }
             }
-            boolean result = line.addAirportBetween(airports.get(beforeAirport), airports.get(afterAirport), airports.get(airportToAdd));
+            Airport before = airports.get(beforeAirport);
+            Airport nowy = airports.get(airportToAdd);
+            Airport after = airports.get(afterAirport);
+            if (!gameData.canInsertAirport(line, before, nowy, after)) return false;
+            boolean result = line.addAirportBetween(before, after, nowy);
             if (result && insertionIndex != -1) {
                 for (Airplane airplane : gameData.getAirplanes()) {
                     if (airplane.line == line && airplane.idx >= insertionIndex) {
@@ -106,26 +128,31 @@ public interface Event {
     public class EditLineAddToEdgeEvent implements Event {
         private final GameData gameData;
         private final int lineId;
-        private final int airportId;
-        private final int edgeAirportId;
+        private final int edgeAirportId;   // lotnisko brzegowe (pierwsze lub ostatnie) linii
+        private final int newAirportId;    // lotnisko, ktore dokladamy za brzegowym
 
-        public EditLineAddToEdgeEvent(GameData gameData, int lineId, int edgeAirportId, int airportId){
+        public EditLineAddToEdgeEvent(GameData gameData, int lineId, int edgeAirportId, int newAirportId){
             this.gameData = gameData;
             this.lineId = lineId;
             this.edgeAirportId = edgeAirportId;
-            this.airportId = airportId;
+            this.newAirportId = newAirportId;
         }
 
         @Override
         public boolean handleEvent(){
             var airports = gameData.getAirports();
+            if (lineId < 0 || lineId >= gameData.getLines().size()) return false;
             Line line = gameData.getLines().get(lineId);
             Airport edgeAirport = airports.get(edgeAirportId);
+            Airport newAirport = airports.get(newAirportId);
+            if (!gameData.canAddAirportToEdge(line, edgeAirport, newAirport)) return false;
             boolean insertAtStart = edgeAirport == line.get(0);
-            boolean result = line.addAirportToEdge(edgeAirport, airports.get(airportId));
+            boolean result = line.addAirportToEdge(edgeAirport, newAirport);
             if (result && insertAtStart) {
+                // Doklejenie na poczatku przesuwa wszystkie indeksy o 1 - lecace samoloty musza
+                // przesunac swoj cel, aby nadal celowac w to samo lotnisko.
                 for (Airplane airplane : gameData.getAirplanes()) {
-                    if (airplane.line == line && airplane.idx >= 0) {
+                    if (airplane.line == line) {
                         airplane.idx++;
                     }
                 }
@@ -156,21 +183,31 @@ public interface Event {
         }
     }
 
-    public class AddAirplaneEvent implements Event {
+    public final class AddAirplaneToLineEvent implements Event {
         GameData gameData;
         int lineId;
+        int airportId;
 
-        AddAirplaneEvent(int lineId, GameData gameData) {
+        AddAirplaneToLineEvent(GameData gameData, int lineId, int airportId) {
             this.lineId = lineId;
+            this.airportId = airportId;
             this.gameData = gameData;
         }
 
         @Override
         public boolean handleEvent() {
-            List<Airplane> airplanes = gameData.getAirplanes();
-            if (gameData.getNumberOfAvailableAirplanes() == 0) return false;
-            gameData.decrementNumberOfAvailableAirplanes();
-            return airplanes.add(new Airplane(gameData.getLines().get(lineId), AirplaneType.SmallAirplane));
+            if (lineId < 0 || lineId >= gameData.getLines().size()) return false;
+            if (airportId < 0 || airportId >= gameData.getAirports().size()) return false;
+            Line line = gameData.getLines().get(lineId);
+            if (line.size() < 2) return false;
+            Airport startAirport = gameData.getAirports().get(airportId);
+            if (!line.contains(startAirport) || !gameData.consumeAvailableAirplane()) return false;
+
+            // Nowy samolot pojawia sie na wybranym lotnisku linii i zglasza sie do ladowania,
+            // dzieki czemu wlacza sie w normalny cykl postoj -> start -> lot.
+            Airplane airplane = new Airplane(line, AirplaneType.SmallAirplane, startAirport, true);
+            startAirport.airplaneReportsToLanding(airplane);
+            return gameData.getAirplanes().add(airplane);
         }
     }
 

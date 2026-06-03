@@ -1,15 +1,12 @@
 package model;
-import java.util.function.*;
 import java.util.*;
 
 public final class Line {
-    private final static Supplier<Color> nextColorGetter = new EnumIterator<>(Color.class);
-
     private final LinkedList<Airport> path = new LinkedList<>();
     public final Color color;
 
-    public Line(Airport a, Airport b){
-        color = nextColorGetter.get();
+    public Line(Airport a, Airport b, Color color){
+        this.color = color;
         path.add(a);
         path.add(b);
     }
@@ -26,6 +23,19 @@ public final class Line {
 
     public LinkedList<Airport> getPath(){
         return path;
+    }
+  
+    public int indexOf(Airport airport) {
+        int counter = 0;
+        for (Airport a : path) {
+            if (a == airport) return counter;
+            ++counter;
+        }
+        return -1;
+    }
+
+    public boolean contains(Airport airport) {
+        return indexOf(airport) >= 0;
     }
 
     public boolean addAirportBetween(Airport a, Airport b, Airport nowy) {

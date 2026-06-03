@@ -1,9 +1,8 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import javafx.util.Pair;
+
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Airplane {
@@ -15,7 +14,11 @@ public class Airplane {
     private boolean currentlyFlying = false;
 
     private boolean valid = true;
+    private boolean returnToPoolWhenRemoved = false;
     private Point position;
+
+    // lotnisko, na ktorym samolot ostatnio wyladowal / w ktorym aktualnie stoi
+    private Airport currentAirport;
 
     AirplaneType type;
 
@@ -24,9 +27,24 @@ public class Airplane {
 
     public Airplane(Line line, AirplaneType type) {
         this.line = line;
-        position = line.get(0).getPosition();
+        currentAirport = line.get(0);
+        position = currentAirport.getPosition();
         this.type = type;
     }
+
+    public Airplane(Line line, AirplaneType type, Airport startAirport) {
+        this.line = line;
+        currentAirport = line.contains(startAirport) ? startAirport : line.get(0);
+        position = currentAirport.getPosition();
+        this.type = type;
+    }
+
+    public Airplane(Line line, AirplaneType type, Airport startAirport, boolean returnToPoolWhenRemoved) {
+        this(line, type, startAirport);
+        this.returnToPoolWhenRemoved = returnToPoolWhenRemoved;
+    }
+
+    public Airport getOrigin() { return line.get(idx + (flyingForward ? -1 : 1)); }
 
     public Airport getDestination() {
         return line.get(idx);
@@ -50,8 +68,14 @@ public class Airplane {
             val++;
         }
     };
-    public int unloadPassengers(Airport airport) {
+    public int unloadPassengers(Airport airport, HashMap<Pair<Integer, Airport>, Pair<Long, Long>> stats) {
         final IntBox nPassengers = new IntBox();
+        final int pass = passengersOnBoard.size();
+
+        stats.compute(new Pair<>(getOrigin().index, getDestination()),
+                (k, stat) ->
+                        new Pair<>((stat != null ? stat.getKey() : 0) + pass*timeSpent.getCurrentTime(), (stat != null ? stat.getValue() : 0) + pass));
+
         passengersOnBoard.removeIf(passenger -> {
             if (passenger.destination == airport.getShape()) {
                 nPassengers.inc();
@@ -94,6 +118,7 @@ public class Airplane {
 
         if (distance <= moveDist) {
             position = targetPos;
+            currentAirport = target;
             target.airplaneReportsToLanding(this);
             currentlyFlying = false;
         } else {
@@ -108,17 +133,35 @@ public class Airplane {
     }
 
     private void prepareNextFlight() {
+        int cur = line.indexOf(currentAirport);
+        int n = line.size();
+
+        // Po edycji trasy lotnisko, na ktorym stoi samolot, moglo zniknac z jego linii.
+        // W takim wypadku samolot (po wyladowaniu pasazerow) wraca na poczatek trasy.
+        if (cur < 0) {
+            flyingForward = true;
+            idx = 0;
+            return;
+        }
+
+        if (n < 2) {
+            idx = 0;
+            return;
+        }
+
         if (flyingForward) {
-            idx++;
-            if (idx >= line.size()) {
+            if (cur + 1 < n) {
+                idx = cur + 1;
+            } else {
                 flyingForward = false;
-                idx = line.size() - 2;
+                idx = cur - 1;
             }
         } else {
-            idx--;
-            if (idx <= -1) {
+            if (cur - 1 >= 0) {
+                idx = cur - 1;
+            } else {
                 flyingForward = true;
-                idx = 1;
+                idx = cur + 1;
             }
         }
     }
@@ -150,6 +193,8 @@ public class Airplane {
     public void setInvalid() { valid = false; }
 
     public boolean isValid() { return valid; }
+
+    public boolean shouldReturnToPoolWhenRemoved() { return returnToPoolWhenRemoved; }
 
     public boolean hasUnloaded() { return unloaded; }
     public void setUnloaded(boolean b) { unloaded = b; }

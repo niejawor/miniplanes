@@ -7,19 +7,33 @@ import model.Airport;
 import model.Line;
 import viewmodel.GamePresenter;
 
+/**
+ * Tryb edycji linii. Obslugiwane operacje (chwyt lewym przyciskiem na linii):
+ *  - chwyt segmentu i przeciagniecie na wolne lotnisko -> wstawienie lotniska pomiedzy dwa istniejace,
+ *  - chwyt lotniska brzegowego (pierwszego/ostatniego) i przeciagniecie na wolne lotnisko -> dodanie na koncu/poczatku,
+ *  - klikniecie lotniska nalezacego do linii (bez przeciagania) -> usuniecie go z linii.
+ */
 public class LineEditor {
     private static final float SEGMENT_SELECT_DISTANCE = 0.02f;
     private static final float AIRPORT_HOVER_DISTANCE = 0.03f;
+    private static final float NODE_GRAB_DISTANCE = 0.018f;
+    private static final float CLICK_MOVE_THRESHOLD = 0.012f;
 
     private boolean editing = false;
     private int selectedLineIndex = -1;
     private int selectedSegmentStart = -1;
     private int selectedSegmentEnd = -1;
+
+    private int grabbedNodeInLine = -1;
+    private boolean grabbedNodeIsEndpoint = false;
+
     private int hoverAirportIndex = -1;
+    private float pressX;
+    private float pressY;
     private float mouseX;
     private float mouseY;
 
-    public boolean tryStartEditing(float x, float y, GamePresenter presenter) {
+    public boolean tryStartEditing(float x, float y, GamePresenter presenter, model.Color selectedColor) {
         float bestDistance = Float.MAX_VALUE;
         int bestLine = -1;
         int bestStart = -1;
@@ -27,6 +41,9 @@ public class LineEditor {
 
         for (int lineIndex = 0; lineIndex < presenter.getLines().size(); lineIndex++) {
             Line line = presenter.getLines().get(lineIndex);
+            if (line.color != selectedColor) {
+                continue;
+            }
             for (int segmentIndex = 0; segmentIndex < line.size() - 1; segmentIndex++) {
                 Airport a = line.get(segmentIndex);
                 Airport b = line.get(segmentIndex + 1);
@@ -46,10 +63,30 @@ public class LineEditor {
             selectedSegmentEnd = bestEnd;
             editing = true;
             hoverAirportIndex = -1;
+            pressX = x;
+            pressY = y;
+            detectGrabbedNode(x, y, presenter.getLines().get(bestLine));
             presenter.pauseGame();
             return true;
         }
         return false;
+    }
+
+    private void detectGrabbedNode(float x, float y, Line line) {
+        grabbedNodeInLine = -1;
+        grabbedNodeIsEndpoint = false;
+        float best = NODE_GRAB_DISTANCE;
+        for (int i = 0; i < line.size(); i++) {
+            Airport airport = line.get(i);
+            float dx = airport.getPosition().getX() - x;
+            float dy = airport.getPosition().getY() - y;
+            float distance = (float) Math.sqrt(dx * dx + dy * dy);
+            if (distance <= best) {
+                best = distance;
+                grabbedNodeInLine = i;
+                grabbedNodeIsEndpoint = (i == 0 || i == line.size() - 1);
+            }
+        }
     }
 
     public void updateMousePosition(float x, float y, GamePresenter presenter) {
@@ -64,7 +101,7 @@ public class LineEditor {
         Line line = presenter.getLines().get(selectedLineIndex);
         for (int airportIndex = 0; airportIndex < presenter.getAirports().size(); airportIndex++) {
             Airport airport = presenter.getAirports().get(airportIndex);
-            if (airportOnLine(line, airport)) {
+            if (line.contains(airport)) {
                 continue;
             }
             float dx = airport.getPosition().getX() - x;
@@ -82,13 +119,30 @@ public class LineEditor {
             return;
         }
 
+        Line line = presenter.getLines().get(selectedLineIndex);
+
         if (hoverAirportIndex != -1) {
-            presenter.insertAirportIntoLine(selectedLineIndex, hoverAirportIndex,
-                    presenter.getAirports().indexOf(presenter.getLines().get(selectedLineIndex).get(selectedSegmentStart)),
-                    presenter.getAirports().indexOf(presenter.getLines().get(selectedLineIndex).get(selectedSegmentEnd)));
+            if (grabbedNodeIsEndpoint && grabbedNodeInLine != -1) {
+                // Dodanie nowego lotniska na koncu/poczatku linii.
+                int edgeAirportId = presenter.getAirports().indexOf(line.get(grabbedNodeInLine));
+                presenter.addAirportToLineEdge(selectedLineIndex, hoverAirportIndex, edgeAirportId);
+            } else {
+                // Wstawienie nowego lotniska pomiedzy dwa istniejace na wybranym segmencie.
+                int beforeId = presenter.getAirports().indexOf(line.get(selectedSegmentStart));
+                int afterId = presenter.getAirports().indexOf(line.get(selectedSegmentEnd));
+                presenter.insertAirportIntoLine(selectedLineIndex, hoverAirportIndex, beforeId, afterId);
+            }
+        } else if (grabbedNodeInLine != -1 && isClick()) {
+            // Klikniecie lotniska nalezacego do linii (bez przeciagania) -> usuniecie z linii.
+            int airportId = presenter.getAirports().indexOf(line.get(grabbedNodeInLine));
+            presenter.removeAirportFromLine(selectedLineIndex, airportId);
         }
 
         stopEditing(presenter);
+    }
+
+    private boolean isClick() {
+        return Math.hypot(mouseX - pressX, mouseY - pressY) < CLICK_MOVE_THRESHOLD;
     }
 
     public void cancel(GamePresenter presenter) {
@@ -108,39 +162,78 @@ public class LineEditor {
         }
 
         Line line = presenter.getLines().get(selectedLineIndex);
-        Airport start = line.get(selectedSegmentStart);
-        Airport end = line.get(selectedSegmentEnd);
-
         double width = canvas.getWidth();
         double height = canvas.getHeight();
-        double startX = start.getPosition().getX() * width;
-        double startY = start.getPosition().getY() * height;
-        double endX = end.getPosition().getX() * width;
-        double endY = end.getPosition().getY() * height;
-        double controlX = mouseX * width;
-        double controlY = mouseY * height;
+        double mouseScreenX = mouseX * width;
+        double mouseScreenY = mouseY * height;
 
         gc.save();
         gc.setLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
         gc.setLineJoin(javafx.scene.shape.StrokeLineJoin.ROUND);
+        Color selectedLineColor = ColorMapper.mapModelColor(line.color);
 
-        gc.setStroke(Color.LIGHTGREEN);
+        boolean removeCandidate = grabbedNodeInLine != -1 && hoverAirportIndex == -1 && isClick();
+
+        if (removeCandidate) {
+            // Podswietl na czerwono lotnisko, ktore zostanie usuniete.
+            Airport node = line.get(grabbedNodeInLine);
+            double nx = node.getPosition().getX() * width;
+            double ny = node.getPosition().getY() * height;
+            gc.setStroke(Color.color(0.9, 0.2, 0.2));
+            gc.setLineWidth(3.0);
+            gc.strokeOval(nx - 14, ny - 14, 28, 28);
+            gc.setStroke(Color.color(0.9, 0.2, 0.2));
+            gc.setLineWidth(3.0);
+            gc.strokeLine(nx - 8, ny - 8, nx + 8, ny + 8);
+            gc.strokeLine(nx - 8, ny + 8, nx + 8, ny - 8);
+        } else if (grabbedNodeIsEndpoint && grabbedNodeInLine != -1) {
+            // Podglad doklejenia na brzegu - linia od brzegowego lotniska do kursora.
+            Airport edge = line.get(grabbedNodeInLine);
+            double ex = edge.getPosition().getX() * width;
+            double ey = edge.getPosition().getY() * height;
+            drawDashed(gc, ex, ey, mouseScreenX, mouseScreenY, selectedLineColor);
+            drawTargetMarker(gc, mouseScreenX, mouseScreenY);
+        } else {
+            // Podglad wstawienia pomiedzy dwa lotniska wybranego segmentu.
+            Airport start = line.get(selectedSegmentStart);
+            Airport end = line.get(selectedSegmentEnd);
+            double startX = start.getPosition().getX() * width;
+            double startY = start.getPosition().getY() * height;
+            double endX = end.getPosition().getX() * width;
+            double endY = end.getPosition().getY() * height;
+
+            gc.setStroke(selectedLineColor);
+            gc.setLineWidth(4.0);
+            gc.setLineDashes(10.0, 8.0);
+            gc.beginPath();
+            gc.moveTo(startX, startY);
+            gc.lineTo(mouseScreenX, mouseScreenY);
+            gc.lineTo(endX, endY);
+            gc.stroke();
+            gc.setLineDashes(null);
+            drawTargetMarker(gc, mouseScreenX, mouseScreenY);
+        }
+
+        gc.restore();
+    }
+
+    private void drawDashed(GraphicsContext gc, double x1, double y1, double x2, double y2, Color color) {
+        gc.setStroke(color);
         gc.setLineWidth(4.0);
         gc.setLineDashes(10.0, 8.0);
         gc.beginPath();
-        gc.moveTo(startX, startY);
-        gc.lineTo(controlX, controlY);
-        gc.lineTo(endX, endY);
+        gc.moveTo(x1, y1);
+        gc.lineTo(x2, y2);
         gc.stroke();
         gc.setLineDashes(null);
+    }
 
+    private void drawTargetMarker(GraphicsContext gc, double x, double y) {
         gc.setFill(Color.color(0.2, 0.9, 0.2, 0.4));
-        gc.fillOval(controlX - 10, controlY - 10, 20, 20);
+        gc.fillOval(x - 10, y - 10, 20, 20);
         gc.setStroke(Color.GREENYELLOW);
         gc.setLineWidth(2.0);
-        gc.strokeOval(controlX - 10, controlY - 10, 20, 20);
-
-        gc.restore();
+        gc.strokeOval(x - 10, y - 10, 20, 20);
     }
 
     private void stopEditing(GamePresenter presenter) {
@@ -148,17 +241,10 @@ public class LineEditor {
         selectedLineIndex = -1;
         selectedSegmentStart = -1;
         selectedSegmentEnd = -1;
+        grabbedNodeInLine = -1;
+        grabbedNodeIsEndpoint = false;
         hoverAirportIndex = -1;
         presenter.resumeGame();
-    }
-
-    private boolean airportOnLine(Line line, Airport airport) {
-        for (int i = 0; i < line.size(); i++) {
-            if (line.get(i) == airport) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private float distanceToSegment(float px, float py, float ax, float ay, float bx, float by) {
