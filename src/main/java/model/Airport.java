@@ -120,7 +120,7 @@ public class Airport {
         return timeOverCrowded;
     }
 
-    private int processParkedAirplanes(HashMap<Pair<Integer, Airport>, Pair<Long, Long>> stats) {
+    private int processParkedAirplanes(HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> stats) {
         int x = 0;
         for (AirplaneEntry entry : parkedAirplanes) {
             Airplane a = entry.airplane;
@@ -154,7 +154,7 @@ public class Airport {
         }
     }
 
-    public int update(long deltaTime, HashMap<Pair<Integer, Airport>, Pair<Long, Long>> stats) {
+    public int update(long deltaTime, HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> stats) {
         finishTakeOffs();
         finishLandings();
 

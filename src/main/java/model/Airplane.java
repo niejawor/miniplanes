@@ -68,13 +68,13 @@ public class Airplane {
             val++;
         }
     };
-    public int unloadPassengers(Airport airport, HashMap<Pair<Integer, Airport>, Pair<Long, Long>> stats) {
+    public int unloadPassengers(Airport airport, HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> stats) {
         final IntBox nPassengers = new IntBox();
         final int pass = passengersOnBoard.size();
 
-        stats.compute(new Pair<>(getOrigin().index, getDestination()),
+        stats.compute(new Pair<>(getOrigin().index, getDestination().getIndex()),
                 (k, stat) ->
-                        new Pair<>((stat != null ? stat.getKey() : 0) + pass*timeSpent.getCurrentTime(), (stat != null ? stat.getValue() : 0) + pass));
+                        new Pair<>((int)((stat != null ? stat.getKey() : 0) + pass*timeSpent.getCurrentTime()), (stat != null ? stat.getValue() : 0) + pass));
 
         passengersOnBoard.removeIf(passenger -> {
             if (passenger.destination == airport.getShape()) {
