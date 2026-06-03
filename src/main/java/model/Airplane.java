@@ -77,10 +77,18 @@ public class Airplane {
                         new Pair<>((int)((stat != null ? stat.getKey() : 0) + pass*timeSpent.getCurrentTime()), (stat != null ? stat.getValue() : 0) + pass));
 
         passengersOnBoard.removeIf(passenger -> {
-            if (passenger.destination == airport.getShape()) {
-                nPassengers.inc();
+            if (passenger.getTargetAirports().contains(airport.getIndex())) {
+                if(passenger.getDestination() == airport.getShape()){
+                    nPassengers.inc();
+                }
+                else{
+                    passenger.setCurrentAirport(airport);
+                    airport.addPassenger(passenger);
+                }
+
                 return true;
             } else if (!passenger.wantsToBoard(this)) {
+                passenger.setCurrentAirport(airport);
                 airport.addPassenger(passenger);
                 return true;
             }

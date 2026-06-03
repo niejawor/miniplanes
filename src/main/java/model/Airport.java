@@ -103,6 +103,9 @@ public class Airport {
     }
 
     public void addPassenger(Passenger passenger) {
+        while(passenger.getDestination() == shape){
+            passenger.changeDestination();
+        }
         passengers.add(passenger);
     }
 
@@ -110,7 +113,7 @@ public class Airport {
         return passengers.size() > type.passengerCapacity;
     }
 
-    private Time timeOverCrowded = new Time(0);
+    private final Time timeOverCrowded = new Time(0);
     private void updateOverCrowded(long deltaTime) {
         if (isOverCrowded()) timeOverCrowded.addTime(deltaTime);
         else timeOverCrowded.setCurrentTime(0);
@@ -143,8 +146,8 @@ public class Airport {
         return x;
     }
 
-    private Time lastNewPassenger = new Time(0);
-    private Time newPassengerThreshold = new Time(0);
+    private final Time lastNewPassenger = new Time(0);
+    private final Time newPassengerThreshold = new Time(0);
     private void generateNewPassengers(long deltaTime) {
         lastNewPassenger.addTime(deltaTime);
         if (lastNewPassenger.getInGameMinutes() >= newPassengerThreshold.getInGameMinutes()) {

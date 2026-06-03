@@ -39,7 +39,7 @@ public class GameData {
     // klucz: krawedz z lotniska first do second, wartosc: first - suma czasow, sec - liczba pobranych danych zainicjalizowalbym na czas przelotu dystansu wprost
     private HashMap<Pair<Integer, Integer>, Pair<Integer,Integer>> stats = new HashMap<>();
 
-    private HashMap<Integer, List<Integer>> bestNextStop = new HashMap<>();
+    private HashMap<Integer, List<List<Integer>>> bestNextStop = new HashMap<>();
 
     private final AtomicInteger totalTransportedPassengers;
 
@@ -50,6 +50,7 @@ public class GameData {
         for (int i = 0; i < INITIAL_UNLOCKED_LINE_COLORS && i < allLineColors.size(); i++) {
             unlockedLineColors.add(allLineColors.get(i));
         }
+
         //this.updater = updater;
         //airportSupplier = new AirportSupplier(AirportListGenerator.generateAirports(updater), null);
     }
@@ -67,9 +68,13 @@ public class GameData {
         return stats;
     }
 
-    public void setBestNextStop(HashMap<Integer,List<Integer>> bestNextStop) {
+    public void setBestNextStop(HashMap<Integer,List<List<Integer>>> bestNextStop) {
         this.bestNextStop.clear();
         this.bestNextStop.putAll(bestNextStop);
+    }
+
+    public HashMap<Integer, List<List<Integer>>> getBestNextStop() {
+        return bestNextStop;
     }
 
     public List<Airplane> getAirplanes(){

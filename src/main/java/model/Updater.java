@@ -19,7 +19,7 @@ public class Updater {
     }
 
     void generatePassenger(Airport airport) {
-        airport.addPassenger(new Passenger(data.getShapeHandler().getRandomUsed()));
+        airport.addPassenger(new Passenger(data.getShapeHandler().getRandomUsed(),airport,data));
     }
 
     List<Airplane> getAirplanes() {

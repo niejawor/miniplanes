@@ -47,6 +47,8 @@ public class GamePresenter {
         this.window = window;
     }
 
+    boolean dijkstraRunning = false;
+
     public void setupGameLoop(){
         AnimationTimer animationTimer = new AnimationTimer() {
             long lastTime = System.nanoTime();
@@ -76,9 +78,11 @@ public class GamePresenter {
                     gameOver = true;
                 }
 
-                if(lastPathsUpdate.getCurrentTime() == 0 || time.getInSeconds() - lastPathsUpdate.getInSeconds() > 10){
+                if(lastPathsUpdate.getCurrentTime() == 0 || time.getInSeconds() - lastPathsUpdate.getInSeconds() > 5){
                     lastPathsUpdate.setCurrentTime(time.getCurrentTime());
-                    triggerPathRefresh();
+                    if(!dijkstraRunning){
+                        triggerPathRefresh();
+                    }
                 }
 
             }
@@ -87,6 +91,8 @@ public class GamePresenter {
     }
 
     public void triggerPathRefresh(){
+        dijkstraRunning = true;
+
         HashMap<Pair<Integer,Integer>,Pair<Integer,Integer>> statsCopy = new HashMap<>(gameData.getStats());
         List<ArrayList<Integer>> copyLinePaths =  new ArrayList<>();
 
@@ -114,17 +120,19 @@ public class GamePresenter {
 
 
         backgroundExecutor.submit(() -> {
-            HashMap<Integer, List<Integer>> result = performPathFinder(statsCopy,copyLinePaths,airportsCopy,airportShapes);
+            HashMap<Integer, List<List<Integer>>> result = performPathFinder(statsCopy,copyLinePaths,airportsCopy,airportShapes);
 
             Platform.runLater(()->{
                 gameData.setBestNextStop(result);
+                dijkstraRunning = false;
             });
         });
     }
 
-    public HashMap<Integer, List<Integer>> performPathFinder(HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> stats, List<ArrayList<Integer>> lines, List<Integer> airports, HashMap<Integer, Shape> airportShapes){
+    // to trzeba przeniesc gdzies do backendu - np do gameData?
+    public HashMap<Integer, List<List<Integer>>> performPathFinder(HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> stats, List<ArrayList<Integer>> lines, List<Integer> airports, HashMap<Integer, Shape> airportShapes){
         HashMap<Integer, List<Pair<Integer, Float>>> graph = new HashMap<>(); // airport -> index
-        HashMap<Integer, List<Integer>> result = new HashMap<>();
+        HashMap<Integer, List<List<Integer>>> result = new HashMap<>();
 
         for(Integer airport : airports){ // indeksy lotnisk
             graph.putIfAbsent(airport, new ArrayList<>());
@@ -175,8 +183,8 @@ public class GamePresenter {
         return result;
     }
 
-    List<Integer> DijkstraShortestPath(Integer start, HashMap<Integer, List<Pair<Integer, Float>>> graph, List<Integer> airports, HashMap<Integer, Shape> airportShapes){
-        List<Integer> result = new ArrayList<>();
+    List<List<Integer>> DijkstraShortestPath(Integer start, HashMap<Integer, List<Pair<Integer, Float>>> graph, List<Integer> airports, HashMap<Integer, Shape> airportShapes){
+        List<List<Integer>> result = new ArrayList<>();
 
         HashMap<Integer, Float> dist = new HashMap<>();
         HashMap<Integer, Integer> prev = new HashMap<>();
@@ -231,8 +239,10 @@ public class GamePresenter {
 
             }
 
-            if(min == null){
-                result.add(start);
+            List<Integer> temp = new ArrayList<>();
+            if(min == null) {
+                temp.add(start);
+                result.add(temp);
                 continue;
             }
 
@@ -243,11 +253,22 @@ public class GamePresenter {
                 }
                 prevAirport = prev.get(prevAirport);
             }
+            temp.add(prevAirport);
 
-            result.add(prevAirport);
+
+            for(Map.Entry<Integer, Float> entry : dist.entrySet()){
+                if(airportShapes.get(entry.getKey()) != Shape.values()[i]){
+                    continue;
+                }
+                if(dist.get(min)*2.5 >= entry.getValue()){
+                    temp.add(entry.getKey());
+                }
+            }
+
+            result.add(temp);
         }
 
-        return  result;
+        return result;
     }
 
     public void processEvents(){

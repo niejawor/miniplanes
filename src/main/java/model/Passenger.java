@@ -1,20 +1,76 @@
 package model;
 
-public class Passenger {
-    final Shape destination;
+import java.util.List;
 
-    public Passenger(Shape destination) {
+public class Passenger {
+    Shape destination;
+    Airport currentAirport;
+    List<Integer> targetAirports;
+    GameData gameData;
+
+    public Passenger(Shape destination,  Airport currentAirport, GameData gameData) {
         this.destination = destination;
+        this.currentAirport = currentAirport;
+        this.gameData = gameData;
     }
 
     public Shape getDestination() {
         return destination;
     }
 
+    public void changeDestination() {
+        destination = gameData.getShapeHandler().getRandomUsed();
+    }
+
+    public List<Integer> getTargetAirports() {
+        return targetAirports;
+    }
+
+    public void setCurrentAirport(Airport currentAirport) {
+        this.currentAirport = currentAirport;
+    }
+
     public boolean wantsToBoard(Airplane airplane) {
-        if (airplane.isFlyingForward()) {
-            for (int i = 0; i < airplane.line.size(); i++)
-                if (airplane.line.get(i).getShape() == destination) return true;
+        List<List<Integer>> temp = gameData.getBestNextStop().get(currentAirport.getIndex());
+        if(temp == null || temp.size() < Shape.values().length) return false;
+        for(int i=0;i<Shape.values().length;i++){
+            if(destination.equals(Shape.values()[i])){
+                targetAirports = temp.get(i);
+                break;
+            }
+        }
+
+        int currentIndexInLine = 0;
+        int counter = 0;
+        for(Airport airport : airplane.line.getPath()){
+            if(currentAirport.getIndex() == airport.getIndex()){
+                currentIndexInLine =  counter;
+                break;
+            }
+            counter++;
+        }
+
+        boolean scanForward;
+        if (currentIndexInLine == 0) {
+            scanForward = true;
+        } else if (currentIndexInLine == airplane.line.size() - 1) {
+            scanForward = false;
+        } else {
+            scanForward = airplane.isFlyingForward();
+        }
+
+        if (scanForward) {
+            for(int i = currentIndexInLine+1; i<airplane.line.size(); i++){
+                if(targetAirports.contains(airplane.line.get(i).getIndex())){
+                    return true;
+                }
+            }
+        } else {
+            for(int i = currentIndexInLine-1; i>=0; i--){
+                if(targetAirports.contains(airplane.line.get(i).getIndex())){
+                    return true;
+                }
+            }
         }
 
         return false;
