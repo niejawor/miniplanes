@@ -9,7 +9,7 @@ import javafx.scene.text.TextAlignment;
 import model.Weekdays;
 
 public class UIRenderer {
-    public static final double CLOCK_CENTER_X = 0.96;
+    public static final double CLOCK_CENTER_X = 0.92;
     public static final double CLOCK_CENTER_Y = 0.06;
     public static final double CLOCK_RADIUS = 0.016;
 
@@ -28,6 +28,7 @@ public class UIRenderer {
 
         drawClock(gc, cx, cy, radius, minutes);
         drawText(gc, w, h, cx, cy, radius, day, score);
+        drawStopButton(gc, cx, cy, radius);
 
         gc.restore();
     }
@@ -92,6 +93,21 @@ public class UIRenderer {
 
         double scoreY = cy + (radius * 0.5);
         gc.fillText(String.valueOf(score), textX, scoreY);
+    }
 
+    private void drawStopButton(GraphicsContext gc, double cx, double cy, double radius) {
+        double bx = cx + radius + 15;
+        double by = cy - 15;
+        double bw = 60;
+        double bh = 30;
+
+        gc.setFill(Color.web("#d9534f"));
+        gc.fillRoundRect(bx, by, bw, bh, 5, 5);
+
+        gc.setTextAlign(TextAlignment.CENTER);
+        gc.setTextBaseline(VPos.CENTER);
+        gc.setFont(Font.font("SansSerif", FontWeight.BOLD, 14));
+        gc.setFill(Color.WHITE);
+        gc.fillText("Stop", bx + (bw / 2.0), by + (bh / 2.0));
     }
 }

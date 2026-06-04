@@ -22,6 +22,10 @@ public class Window extends Pane {
     private final Navbar navbar;
     private StackPane rewardOverlay;
 
+    private MainMenuOverlay mainMenuOverlay;
+    private PauseOverlay pauseOverlay;
+    private GameOverOverlay gameOverOverlay;
+
     private model.Color selectedColor;
     private boolean addAirplaneMode = false;
     private int selectedLineForAirplane = -1;
@@ -65,16 +69,35 @@ public class Window extends Pane {
         });
         navbar.prefWidthProperty().bind(this.widthProperty().multiply(0.5));
 
-        this.widthProperty().addListener((obs, oldV, newV) -> { clampPan(); positionNavbar(); });
-        this.heightProperty().addListener((obs, oldV, newV) -> { clampPan(); positionNavbar(); });
-        navbar.heightProperty().addListener((obs, oldV, newV) -> positionNavbar());
-        navbar.widthProperty().addListener((obs, oldV, newV) -> positionNavbar());
+        this.widthProperty().addListener((obs, oldV, newV) -> { clampPan(); positionUIElements(); });
+        this.heightProperty().addListener((obs, oldV, newV) -> { clampPan(); positionUIElements(); });
+        navbar.heightProperty().addListener((obs, oldV, newV) -> positionUIElements());
+        navbar.widthProperty().addListener((obs, oldV, newV) -> positionUIElements());
 
         getChildren().add(canvas);
         getChildren().add(navbar);
         setFocusTraversable(true);
 
         setOnMousePressed(e -> {
+            if (mainMenuOverlay != null || pauseOverlay != null || gameOverOverlay != null) return;
+
+            double mouseX = e.getX();
+            double mouseY = e.getY();
+            double w = getWidth();
+            double h = getHeight();
+            double cx = UIRenderer.CLOCK_CENTER_X * w;
+            double radius = UIRenderer.CLOCK_RADIUS * w;
+            double cy = UIRenderer.CLOCK_CENTER_Y * h;
+            double bx = cx + radius + 15;
+            double by = cy - 15;
+            double bw = 60;
+            double bh = 30;
+
+            if (e.getButton() == MouseButton.PRIMARY && mouseX >= bx && mouseX <= bx + bw && mouseY >= by && mouseY <= by + bh) {
+                showPauseOverlay();
+                return;
+            }
+
             lastMouseX = e.getX();
             lastMouseY = e.getY();
 
@@ -116,6 +139,7 @@ public class Window extends Pane {
         });
 
         setOnMouseDragged(e -> {
+            if (mainMenuOverlay != null || pauseOverlay != null || gameOverOverlay != null) return;
             double dx = e.getX() - lastMouseX;
             double dy = e.getY() - lastMouseY;
 
@@ -138,11 +162,13 @@ public class Window extends Pane {
         });
 
         setOnScroll(e -> {
+            if (mainMenuOverlay != null || pauseOverlay != null || gameOverOverlay != null) return;
             double zoomFactor = e.getDeltaY() > 0 ? 1.1 : 0.9;
             applyZoom(zoomFactor, e.getX(), e.getY());
         });
 
         setOnKeyPressed(e -> {
+            if (mainMenuOverlay != null || pauseOverlay != null || gameOverOverlay != null) return;
             if (e.isControlDown() || e.isShortcutDown()) {
                 if (e.getCode() == KeyCode.PLUS || e.getCode() == KeyCode.EQUALS) {
                     applyZoom(1.1, canvas.getWidth() / 2, canvas.getHeight() / 2);
@@ -165,13 +191,7 @@ public class Window extends Pane {
             }
         });
 
-//        AnimationTimer timer = new AnimationTimer() {
-//            @Override
-//            public void handle(long now) {
-//                renderer.render(zoom, panX, panY);
-//            }
-//        };
-//        timer.start();
+        showMainMenuOverlay();
     }
 
     public void render() {
@@ -180,6 +200,33 @@ public class Window extends Pane {
 
     public void refreshNavbar() {
         navbar.refresh(presenter.getPalette(), presenter.getAvailableAirplanes());
+    }
+
+    public void clearMainMenuOverlay() { this.mainMenuOverlay = null; }
+    public void clearPauseOverlay() { this.pauseOverlay = null; }
+    public void clearGameOverOverlay() { this.gameOverOverlay = null; }
+
+    public void showMainMenuOverlay() {
+        if (mainMenuOverlay != null) return;
+        presenter.pauseGame();
+
+        mainMenuOverlay = new MainMenuOverlay(this, presenter);
+        getChildren().add(mainMenuOverlay);
+    }
+
+    public void showPauseOverlay() {
+        if (pauseOverlay != null || presenter.isGameOver() || mainMenuOverlay != null) return;
+        presenter.pauseGame();
+
+        pauseOverlay = new PauseOverlay(this, presenter);
+        getChildren().add(pauseOverlay);
+    }
+
+    public void showGameOverOverlay() {
+        if (gameOverOverlay != null) return;
+
+        gameOverOverlay = new GameOverOverlay(this, presenter);
+        getChildren().add(gameOverOverlay);
     }
 
     public void showRewardPopup(model.Color nextColor) {
@@ -362,7 +409,7 @@ public class Window extends Pane {
         return Math.hypot(px - projX, py - projY);
     }
 
-    private void positionNavbar() {
+    private void positionUIElements() {
         double barWidth = navbar.getWidth();
         if (barWidth <= 0) {
             barWidth = this.getWidth() * 0.5;
@@ -370,5 +417,10 @@ public class Window extends Pane {
         double barHeight = navbar.getHeight();
         navbar.setLayoutX((this.getWidth() - barWidth) / 2.0);
         navbar.setLayoutY(this.getHeight() - barHeight - 18);
+    }
+
+    @Deprecated
+    private void positionNavbar() {
+        positionUIElements();
     }
 }

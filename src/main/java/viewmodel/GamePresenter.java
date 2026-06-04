@@ -13,13 +13,13 @@ import java.util.stream.Collectors;
 
 public class GamePresenter {
     private final BasicGameData basicGameData;
-    private final GameData gameData;
-    private final Updater updater;
+    private GameData gameData;
+    private Updater updater;
 
     private final Queue<Event> eventsQueue = new LinkedList<>();
 
     private boolean gameOver = false;
-    private boolean paused = false;
+    private boolean paused = true;
 
     Window window;
 
@@ -30,8 +30,11 @@ public class GamePresenter {
     private long lastRewardPopupTime = 0;
     private boolean rewardPopupOpen = false;
 
-    //pamietac o zamknieciu kiedy bedzie game over
-    private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor(runnable -> {
+        Thread thread = new Thread(runnable);
+        thread.setDaemon(true);
+        return thread;
+    });
 
 
     public GamePresenter() {
@@ -77,6 +80,10 @@ public class GamePresenter {
 
                 if(result.isItOver()){
                     gameOver = true;
+                    // Wywołanie okna Game Over w wątku JavaFX
+                    Platform.runLater(() -> {
+                        if (window != null) window.showGameOverOverlay();
+                    });
                 }
 
                 if(lastPathsUpdate.getCurrentTime() == 0 || time.getInSeconds() - lastPathsUpdate.getInSeconds() > 1){
@@ -89,6 +96,22 @@ public class GamePresenter {
             }
         };
         animationTimer.start();
+    }
+
+    public void restartGame() {
+        this.score = 0;
+        this.time = new Time(0);
+        this.gameOver = false;
+        this.paused = false;
+        this.lastRewardPopupTime = 0;
+        this.rewardPopupOpen = false;
+        this.gameData = new GameData();
+        this.updater = new Updater(gameData);
+        this.gameData.setUpdater(updater);
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
     }
 
     public void triggerPathRefresh(){
