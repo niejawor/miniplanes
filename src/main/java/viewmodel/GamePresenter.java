@@ -276,7 +276,7 @@ public class GamePresenter {
         }
         if (now - lastRewardPopupTime < REWARD_POPUP_INTERVAL_NANOS) {
             return;
-        }
+        } // zmienic co np 4 dni // chyba pomija czas jak jest pazua w senise tez go liczy - do poprawy 
 
         lastRewardPopupTime = now;
         rewardPopupOpen = true;

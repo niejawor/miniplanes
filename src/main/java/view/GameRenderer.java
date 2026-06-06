@@ -29,7 +29,7 @@ public class GameRenderer {
         this.routeBuilder = routeBuilder;
         this.lineEditor = lineEditor;
         this.lineRenderer = new LineRenderer(presenter);
-        this.backgroundTexture = new Image(new File("src/assets/mapa.png").toURI().toString());
+        this.backgroundTexture = new Image(new File("src/assets/mapa_chlodny_krem_2x_kontur.png").toURI().toString());
         this.airplaneTexture = new Image(new File("src/assets/airplane2.png").toURI().toString());
         this.airportRenderer = new AirportRenderer(presenter, shapePainter, airplaneTexture);
         this.airplaneRenderer = new AirplaneRenderer(presenter, airplaneTexture, shapePainter);
