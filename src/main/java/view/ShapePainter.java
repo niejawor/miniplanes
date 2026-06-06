@@ -15,6 +15,10 @@ public class ShapePainter {
     }
 
     public void drawSingleShape(Shape shape, float x, float y, float size, model.Color color) {
+        drawSingleShape(shape, x, y, size, ColorMapper.mapModelColor(color));
+    }
+
+    public void drawSingleShape(Shape shape, float x, float y, float size, Color fillColor) {
         double w = canvas.getWidth();
         gc.save();
 
@@ -22,7 +26,7 @@ public class ShapePainter {
         gc.scale(w, w);
 
         float s;
-        gc.setFill(ColorMapper.mapModelColor(color));
+        gc.setFill(fillColor);
         gc.setStroke(Color.BLACK);
 
         gc.setLineWidth(170 * size / w);

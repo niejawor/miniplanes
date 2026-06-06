@@ -90,7 +90,7 @@ public class Updater {
         boolean gameOver = false;
         for(Airport a: data.getAirports()){
             Time temp2 = a.howLongOverCrowded();
-            if(temp2.getInGameDays() > data.getMaxOvercrowdedTime()){
+            if(temp2.getInGameDaysPrecise() >= data.getMaxOvercrowdedTime()){
                 gameOver = true;
             }
         }

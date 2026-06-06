@@ -243,6 +243,10 @@ public class GamePresenter {
         return score;
     }
 
+    public int getMaxOvercrowdedTime() {
+        return gameData.getMaxOvercrowdedTime();
+    }
+
     public void chooseLineReward() {
         gameData.unlockNextLineColor();
         rewardPopupOpen = false;

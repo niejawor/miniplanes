@@ -2,10 +2,11 @@ package view;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeLineJoin;
 import model.Airport;
-import model.Airplane;
+import model.AirportCrowdingLevel;
 import model.Passenger;
 import viewmodel.GamePresenter;
 
@@ -22,7 +23,6 @@ public class AirportRenderer {
 
     public void drawAirports(GraphicsContext gc, double w, double h, double zoom) {
         float size = 0.008f;
-        model.Color color = model.Color.Red;
 
         for (Airport airport : presenter.getAirports()) {
             float x = airport.getPosition().getX();
@@ -43,7 +43,9 @@ public class AirportRenderer {
                 b  = 1 + t;
             }
 
-            shapePainter.drawSingleShape(airport.getShape(), x, y, s, color);
+            AirportCrowdingLevel crowdingLevel = airport.getCrowdingLevel(presenter.getMaxOvercrowdedTime());
+            Color airportColor = AirportCrowdingColorMapper.mapCrowdingLevel(crowdingLevel);
+            shapePainter.drawSingleShape(airport.getShape(), x, y, s, airportColor);
 
             drawAirportDetails(airport, x, y, b);
 

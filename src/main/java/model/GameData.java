@@ -120,7 +120,7 @@ public class GameData {
         return numberOfAvailableAirplanes.get();
     }
 
-    int getMaxOvercrowdedTime(){
+    public int getMaxOvercrowdedTime(){
         return maxOvercrowdedTime;
     }
 

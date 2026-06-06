@@ -1,6 +1,8 @@
 package model;
 
 public class Time {
+    public static final double REAL_SECONDS_PER_GAME_DAY = 43.2;
+
     private long currentTime;
     public Time(long currentTime) {
         this.currentTime = currentTime;
@@ -33,6 +35,10 @@ public class Time {
 
     public long getInGameDays() {
         return (long)((double)getInSeconds() / (double)43.2);
+    }
+
+    public double getInGameDaysPrecise() {
+        return ((double) currentTime / 1_000_000_000.0) / REAL_SECONDS_PER_GAME_DAY;
     }
 
     public void setInMinutes(long i) {

@@ -109,7 +109,7 @@ public class Airport {
         passengers.add(passenger);
     }
 
-    private boolean isOverCrowded() {
+    public boolean isOverCrowded() {
         return passengers.size() > type.passengerCapacity;
     }
 
@@ -121,6 +121,27 @@ public class Airport {
 
     public Time howLongOverCrowded() {
         return timeOverCrowded;
+    }
+
+    public AirportCrowdingLevel getCrowdingLevel(int maxOvercrowdedTimeInDays) {
+        if (!isOverCrowded()) {
+            return AirportCrowdingLevel.NORMAL;
+        }
+        if (maxOvercrowdedTimeInDays <= 0) {
+            return AirportCrowdingLevel.GAME_OVER;
+        }
+
+        double crowdingRatio = timeOverCrowded.getInGameDaysPrecise() / maxOvercrowdedTimeInDays;
+        if (crowdingRatio >= 1.0) {
+            return AirportCrowdingLevel.GAME_OVER;
+        }
+        if (crowdingRatio >= 2.0 / 3.0) {
+            return AirportCrowdingLevel.OVERCROWDED_TWO_THIRDS;
+        }
+        if (crowdingRatio >= 1.0 / 3.0) {
+            return AirportCrowdingLevel.OVERCROWDED_ONE_THIRD;
+        }
+        return AirportCrowdingLevel.OVERCROWDED_STARTED;
     }
 
     private int processParkedAirplanes(HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> stats) {
