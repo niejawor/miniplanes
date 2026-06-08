@@ -21,6 +21,7 @@ public class Window extends Pane {
     private final LineEditor lineEditor;
     private final Navbar navbar;
     private StackPane rewardOverlay;
+    private StackPane addAirplaneColorOverlay;
 
     private MainMenuOverlay mainMenuOverlay;
     private PauseOverlay pauseOverlay;
@@ -64,8 +65,11 @@ public class Window extends Pane {
                 navbar.setAirplaneLineSelected(false);
                 if (active) {
                     routeBuilder.clear();
+                    showAddAirplaneColorPopup();
                 }
             }
+
+            
         });
         navbar.prefWidthProperty().bind(this.widthProperty().multiply(0.5));
 
@@ -186,7 +190,8 @@ public class Window extends Pane {
                 } else if (lineEditor.isEditing()) {
                     lineEditor.cancel(presenter);
                 } else {
-                    routeBuilder.clear();
+                    // if not in any special mode, ESC should open pause
+                    showPauseOverlay();
                 }
             }
         });
@@ -231,34 +236,36 @@ public class Window extends Pane {
 
     public void showRewardPopup(model.Color nextColor) {
         if (rewardOverlay != null) return;
-
+        // ensure game is paused when reward popup is shown
+        presenter.pauseGame();
         rewardOverlay = new StackPane();
         rewardOverlay.prefWidthProperty().bind(widthProperty());
         rewardOverlay.prefHeightProperty().bind(heightProperty());
-        rewardOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.35);");
+        rewardOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.55);");
         rewardOverlay.setPickOnBounds(true);
 
-        VBox panel = new VBox(16);
+        VBox panel = new VBox(20);
         panel.setAlignment(Pos.CENTER);
-        panel.setPadding(new Insets(26, 34, 26, 34));
-        panel.setMaxWidth(460);
-        panel.setStyle("-fx-background-color: rgba(245,245,245,0.96); -fx-background-radius: 18;"
-                + "-fx-border-color: rgba(0,0,0,0.25); -fx-border-radius: 18;");
+        panel.setPadding(new Insets(30));
+        panel.setMaxWidth(600);
+        panel.setMaxHeight(320);
+        panel.setStyle("-fx-background-color: rgba(255,255,255,0.95); -fx-background-radius: 15; -fx-border-color: #bdc3c7; -fx-border-radius: 15; -fx-border-width: 2;");
 
         Label title = new Label("Nowa nagroda");
-        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #222;");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #34495e;");
 
         Label text = new Label(nextColor == null
                 ? "Wszystkie kolory sa juz odblokowane. Mozesz dobrac samolot."
                 : "Wybierz: nowa linia z kolorem " + nextColor + " albo dodatkowy samolot.");
         text.setWrapText(true);
-        text.setStyle("-fx-font-size: 15px; -fx-text-fill: #333;");
+        text.setStyle("-fx-font-size: 15px; -fx-text-fill: #7f8c8d;");
 
-        HBox buttons = new HBox(12);
+        HBox buttons = new HBox(15);
         buttons.setAlignment(Pos.CENTER);
 
         if (nextColor != null) {
             Button lineButton = new Button("Linia: " + nextColor);
+            lineButton.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-background-radius: 5;");
             lineButton.setFocusTraversable(false);
             lineButton.setOnAction(e -> {
                 closeRewardPopup();
@@ -268,13 +275,15 @@ public class Window extends Pane {
         }
 
         Button airplaneButton = new Button("Samolot +1");
+        airplaneButton.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-background-radius: 5;");
         airplaneButton.setFocusTraversable(false);
         airplaneButton.setOnAction(e -> {
             closeRewardPopup();
             presenter.chooseAirplaneReward();
         });
 
-        Button skipButton = new Button("Pomin");
+        Button skipButton = new Button("Pomiń");
+        skipButton.setStyle("-fx-background-color: #e0e0e0; -fx-text-fill: #2c3e50; -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-background-radius: 5;");
         skipButton.setFocusTraversable(false);
         skipButton.setOnAction(e -> {
             closeRewardPopup();
@@ -285,6 +294,106 @@ public class Window extends Pane {
         panel.getChildren().addAll(title, text, buttons);
         rewardOverlay.getChildren().add(panel);
         getChildren().add(rewardOverlay);
+    }
+
+    public void showAddAirplaneColorPopup() {
+        if (addAirplaneColorOverlay != null) return;
+
+        // pause game while selecting color/line to add airplane
+        presenter.pauseGame();
+
+        addAirplaneColorOverlay = new StackPane();
+        addAirplaneColorOverlay.prefWidthProperty().bind(widthProperty());
+        addAirplaneColorOverlay.prefHeightProperty().bind(heightProperty());
+        addAirplaneColorOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.55);");
+        addAirplaneColorOverlay.setPickOnBounds(true);
+
+        VBox panel = new VBox(12);
+        panel.setAlignment(Pos.CENTER);
+        panel.setPadding(new Insets(20));
+        panel.setMaxWidth(420);
+        panel.setMaxHeight(320);
+        panel.setStyle("-fx-background-color: rgba(255,255,255,0.95); -fx-background-radius: 15; -fx-border-color: #bdc3c7; -fx-border-radius: 15; -fx-border-width: 2;");
+
+        Label title = new Label("Wybierz kolor linii");
+        title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #34495e;");
+
+        HBox colors = new HBox(12);
+        colors.setAlignment(Pos.CENTER);
+
+        // gather distinct colors used by existing lines
+        java.util.Set<model.Color> usedColors = new java.util.LinkedHashSet<>();
+        for (model.Line l : presenter.getLines()) {
+            if (l != null && l.color != null) usedColors.add(l.color);
+        }
+
+        if (usedColors.isEmpty()) {
+            Label none = new Label("Brak istniejących linii.");
+            none.setStyle("-fx-font-size: 14px; -fx-text-fill: #7f8c8d;");
+            panel.getChildren().addAll(title, none);
+        } else {
+            for (model.Color c : usedColors) {
+                VBox item = new VBox(6);
+                item.setAlignment(Pos.CENTER);
+                Button b = new Button();
+                b.setPrefSize(44, 44);
+                b.setStyle("-fx-background-color: " + colorToCss(c) + "; -fx-background-radius: 22; -fx-border-radius: 22; -fx-border-color: rgba(0,0,0,0.12); -fx-border-width: 2;");
+                b.setFocusTraversable(false);
+                Label name = new Label(c.toString());
+                name.setStyle("-fx-font-size: 12px; -fx-text-fill: #34495e;");
+                b.setOnAction(e -> {
+                    // select color and enter add-airplane mode; next click will pick airport on a line of this color
+                    selectedColor = c;
+                    navbar.setAddAirplaneActive(true);
+                    addAirplaneMode = true;
+                    selectedLineForAirplane = -2; // special: waiting for airport click to add airplane directly
+                    navbar.setAirplaneLineSelected(true);
+                    closeAddAirplaneColorPopup();
+                    requestFocus();
+                });
+                item.getChildren().addAll(b, name);
+                colors.getChildren().add(item);
+            }
+            panel.getChildren().addAll(title, colors);
+        }
+
+        Button cancel = new Button("Anuluj");
+        cancel.setStyle("-fx-background-color: #e0e0e0; -fx-text-fill: #2c3e50; -fx-font-size: 14px; -fx-padding: 8 14 8 14; -fx-background-radius: 6;");
+        cancel.setOnAction(e -> {
+            // ensure we exit add-airplane mode when cancelling
+            addAirplaneMode = false;
+            navbar.setAddAirplaneActive(false);
+            navbar.setAirplaneLineSelected(false);
+            closeAddAirplaneColorPopup();
+        });
+
+        panel.getChildren().add(cancel);
+        addAirplaneColorOverlay.getChildren().add(panel);
+        getChildren().add(addAirplaneColorOverlay);
+    }
+
+    private void closeAddAirplaneColorPopup() {
+        if (addAirplaneColorOverlay == null) return;
+        getChildren().remove(addAirplaneColorOverlay);
+        addAirplaneColorOverlay = null;
+        // resume game only if no other overlays that should pause are present
+        if (mainMenuOverlay == null && pauseOverlay == null && gameOverOverlay == null && rewardOverlay == null) {
+            presenter.resumeGame();
+        }
+        requestFocus();
+    }
+
+    private String colorToCss(model.Color c) {
+        switch (c) {
+            case Red: return "#cc3333";
+            case Green: return "#33aa44";
+            case Blue: return "#3366dd";
+            case Yellow: return "#e6bf26";
+            case Orange: return "#e67326";
+            case Purple: return "#8c40d9";
+            case Cyan: return "#26bfd9";
+            default: return "#222222";
+        }
     }
 
     private void closeRewardPopup() {
@@ -336,6 +445,30 @@ public class Window extends Pane {
     }
 
     private void handleAddAirplaneClick(float x, float y) {
+        if (selectedLineForAirplane == -2) {
+            // special mode: waiting for airport click, then add airplane to any line of selectedColor that contains that airport
+            int airportId = findAirportNear(x, y);
+            if (airportId >= 0) {
+                // find a line with matching color that contains this airport
+                var lines = presenter.getLines();
+                for (int i = 0; i < lines.size(); i++) {
+                    model.Line line = lines.get(i);
+                    if (line.color == selectedColor && line.contains(presenter.getAirports().get(airportId))) {
+                        presenter.addAirplaneToLine(i, airportId);
+                        addAirplaneMode = false;
+                        selectedLineForAirplane = -1;
+                        navbar.setAddAirplaneActive(false);
+                        navbar.setAirplaneLineSelected(false);
+                        return;
+                    }
+                }
+                // no matching colored line found for this airport: fall back to selecting a line
+            }
+            selectedLineForAirplane = findLineIndexNear(x, y);
+            navbar.setAirplaneLineSelected(selectedLineForAirplane >= 0);
+            return;
+        }
+
         if (selectedLineForAirplane < 0) {
             selectedLineForAirplane = findLineIndexNear(x, y);
             navbar.setAirplaneLineSelected(selectedLineForAirplane >= 0);
@@ -368,6 +501,19 @@ public class Window extends Pane {
             float dy = airport.getPosition().getY() - y;
             if (Math.hypot(dx, dy) <= 0.03) {
                 return presenter.getAirports().indexOf(airport);
+            }
+        }
+        return -1;
+    }
+
+    private int findAirportNear(float x, float y) {
+        var airports = presenter.getAirports();
+        for (int i = 0; i < airports.size(); i++) {
+            model.Airport airport = airports.get(i);
+            float dx = airport.getPosition().getX() - x;
+            float dy = airport.getPosition().getY() - y;
+            if (Math.hypot(dx, dy) <= 0.03) {
+                return i;
             }
         }
         return -1;
@@ -422,5 +568,22 @@ public class Window extends Pane {
     @Deprecated
     private void positionNavbar() {
         positionUIElements();
+    }
+
+    /** Reset window-local state after a game restart. */
+    public void resetAfterRestart() {
+        routeBuilder.clear();
+        try {
+            if (lineEditor.isEditing()) lineEditor.cancel(presenter);
+        } catch (Exception ignored) {}
+        addAirplaneMode = false;
+        selectedLineForAirplane = -1;
+        if (navbar != null) {
+            navbar.setAddAirplaneActive(false);
+            navbar.setAirplaneLineSelected(false);
+        }
+        closeAddAirplaneColorPopup();
+        closeRewardPopup();
+        requestFocus();
     }
 }
