@@ -10,7 +10,7 @@ import javafx.util.Pair;
 public class Airport {
 
     public static class AirplaneEntry {
-        public int index;          // Terminal dla zaparkowanych, numer pasa startowego dla startujących i numer pasa lądowania dla lądujących
+        public int index;
         public int terminalIndex;
         public Airplane airplane;
 
@@ -149,12 +149,12 @@ public class Airport {
         for (AirplaneEntry entry : parkedAirplanes) {
             Airplane a = entry.airplane;
 
-            if (!a.hasUnloaded() && a.getTimeSpent().getCurrentTime() >= 1.0f) {
+            if (!a.hasUnloaded() && a.getTimeSpent().getInGameMinutes() >= 1) {
                 x += a.unloadPassengers(this, updater, data);
                 a.setUnloaded(true);
             }
 
-            if (!a.hasLoaded() && a.getTimeSpent().getCurrentTime() >= 2.0f) {
+            if (!a.hasLoaded() && a.getTimeSpent().getInGameMinutes() >= 2) {
                 passengers.removeIf(passenger -> {
                     if (passenger.wantsToBoard(a) && a.loadPassenger(passenger)) {
                         return true;
@@ -174,7 +174,6 @@ public class Airport {
         if (lastNewPassenger.getInGameMinutes() >= newPassengerThreshold.getInGameMinutes()) {
             lastNewPassenger.setCurrentTime(0);
             updater.generatePassenger(this);
-            //this.addPassenger(new Passenger(shapeHandler.getRandomUsed()));
         }
     }
 
@@ -193,31 +192,35 @@ public class Airport {
     }
 
     public void finishTakeOffs() {
-        Iterator<AirplaneEntry> it = startingAirplanes.iterator();
-        AirplaneEntry entry;
-        while (it.hasNext()) {
-            if ((entry=it.next()).airplane.getTimeSpent().getInGameMinutes() >= type.timeSpentTakingOff) { // tutaj poprawka czasu
-                if (entry.airplane.isValid()) entry.airplane.startNextJourney();
-                else updater.getAirplanes().remove(entry.airplane);
-                startingAirplanes.remove(entry);
-                //it.remove();
+        startingAirplanes.removeIf(entry -> {
+            double minutesSpent = entry.airplane.getTimeSpent().getInGameDaysPrecise() * 1440.0;
+
+            if (minutesSpent >= type.timeSpentTakingOff) {
+                if (entry.airplane.isValid()) {
+                    entry.airplane.startNextJourney();
+                } else {
+                    updater.getAirplanes().remove(entry.airplane);
+                }
+                return true;
             }
-        }
+            return false;
+        });
     }
 
     public void finishLandings() {
-        Iterator<AirplaneEntry> it = landingAirplanes.iterator();
-        AirplaneEntry entry;
-        while (it.hasNext()) {
-            if ((entry=it.next()).airplane.getTimeSpent().getInGameMinutes() >= type.timeSpentLanding) { // tutaj poprawka czasu
+        landingAirplanes.removeIf(entry -> {
+            double minutesSpent = entry.airplane.getTimeSpent().getInGameDaysPrecise() * 1440.0;
+
+            if (minutesSpent >= type.timeSpentLanding) {
                 parkedAirplanes.add(new AirplaneEntry(entry.airplane, currentlyFreeTerminal, currentlyFreeTerminal));
                 currentlyFreeTerminal += 1;
                 currentlyFreeTerminal %= type.terminals;
+
                 entry.airplane.startDockingProcedure();
-                landingAirplanes.remove(entry);
-                //it.remove();
+                return true;
             }
-        }
+            return false;
+        });
     }
 
     private boolean canLand() {

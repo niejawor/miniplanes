@@ -2,23 +2,65 @@ package view;
 
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeLineJoin;
+import model.Airplane;
 import model.Airport;
 import model.AirportCrowdingLevel;
 import model.Passenger;
 import viewmodel.GamePresenter;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class AirportRenderer {
     private final GamePresenter presenter;
     private final ShapePainter shapePainter;
     private final Image airplaneTexture;
+    private final Map<model.Color, Image> tintedCache = new HashMap<>();
 
     public AirportRenderer(GamePresenter presenter, ShapePainter shapePainter, Image airplaneTexture) {
         this.presenter = presenter;
         this.shapePainter = shapePainter;
         this.airplaneTexture = airplaneTexture;
+    }
+
+    private Image createTintedImage(model.Color mc) {
+        PixelReader pr = airplaneTexture.getPixelReader();
+        int iw = (int) airplaneTexture.getWidth();
+        int ih = (int) airplaneTexture.getHeight();
+        WritableImage out = new WritableImage(iw, ih);
+        PixelWriter pw = out.getPixelWriter();
+
+        Color tint = ColorMapper.mapModelColor(mc);
+        double blend = 0.6;
+
+        for (int y = 0; y < ih; y++) {
+            for (int x = 0; x < iw; x++) {
+                Color oc = pr.getColor(x, y);
+                double a = oc.getOpacity();
+                if (a == 0) {
+                    pw.setColor(x, y, new Color(0,0,0,0));
+                } else {
+                    double r = oc.getRed() * (1 - blend) + tint.getRed() * blend;
+                    double g = oc.getGreen() * (1 - blend) + tint.getGreen() * blend;
+                    double b = oc.getBlue() * (1 - blend) + tint.getBlue() * blend;
+                    pw.setColor(x, y, new Color(clamp(r), clamp(g), clamp(b), a));
+                }
+            }
+        }
+
+        return out;
+    }
+
+    private double clamp(double v) {
+        if (v < 0) return 0;
+        if (v > 1) return 1;
+        return v;
     }
 
     public void drawAirports(GraphicsContext gc, double w, double h, double zoom) {
@@ -54,17 +96,21 @@ public class AirportRenderer {
                 drawAirportInfrastructure(gc, airport, infraS, x, y, w, h);
 
                 for (Airport.AirplaneEntry entry : airport.getLandingAirplanes()) {
-                    double progress = entry.airplane.getTimeSpent().getCurrentTime() / airport.getAirportType().timeSpentLanding;
-                    drawDynamicAirplane(gc, infraS, x, y, w, h, progress, true, entry.terminalIndex, airport.getAirportType().terminals);
+                    double minutesSpent = entry.airplane.getTimeSpent().getInGameDaysPrecise() * 1440.0;
+                    double progress = minutesSpent / airport.getAirportType().timeSpentLanding;
+
+                    drawDynamicAirplane(gc, infraS, x, y, w, h, progress, true, entry.terminalIndex, airport.getAirportType().terminals, entry.airplane);
                 }
 
                 for (Airport.AirplaneEntry entry : airport.getStartingAirplanes()) {
-                    double progress = entry.airplane.getTimeSpent().getCurrentTime() / airport.getAirportType().timeSpentTakingOff;
-                    drawDynamicAirplane(gc, infraS, x, y, w, h, progress, false, entry.terminalIndex, airport.getAirportType().terminals);
+                    double minutesSpent = entry.airplane.getTimeSpent().getInGameDaysPrecise() * 1440.0;
+                    double progress = minutesSpent / airport.getAirportType().timeSpentTakingOff;
+
+                    drawDynamicAirplane(gc, infraS, x, y, w, h, progress, false, entry.terminalIndex, airport.getAirportType().terminals, entry.airplane);
                 }
 
                 for (Airport.AirplaneEntry entry : airport.getParkedAirplanes()) {
-                    drawDynamicAirplane(gc, infraS, x, y, w, h, 0.0, false, entry.terminalIndex, airport.getAirportType().terminals);
+                    drawDynamicAirplane(gc, infraS, x, y, w, h, 0.0, false, entry.terminalIndex, airport.getAirportType().terminals, entry.airplane);
                 }
             }
         }
@@ -132,18 +178,15 @@ public class AirportRenderer {
         gc.restore();
     }
 
-    // Poniższą funkcję wygenerowałem korzystając ze sztucznej inteligencji (mimo to straciłem dużo godzin na to). Jeśli wystarczy czasu, to później postaram się ją napisać w jakiś sposób sam.
-    private void drawDynamicAirplane(GraphicsContext gc, float s, float x, float y, double w, double h, double progress, boolean isLanding, int terminalIndex, int totalTerminals) {
+    private void drawDynamicAirplane(GraphicsContext gc, float s, float x, float y, double w, double h, double progress, boolean isLanding, int terminalIndex, int totalTerminals, Airplane airplane) {
         progress = Math.max(0.0, Math.min(1.0, progress));
 
-        // Zmienne korespondujące z geometrią lotniska
         double leftX = -3.5 * s;
         double rightX = 3.5 * s;
         double topY = -2.5 * s;
         double bottomY = 4.5 * s;
         double curve = 1.5 * s;
 
-        // Geometria terminali
         double startX = -1.5 * s;
         double endX = 1.5 * s;
         double step = (totalTerminals > 1) ? (endX - startX) / (totalTerminals - 1) : 0;
@@ -157,30 +200,23 @@ public class AirportRenderer {
         double targetX = 0, targetY = 0, angle = 0;
 
         if (isLanding) {
-            // --- PROCES LĄDOWANIA ---
-            // Zamiast sztywnych progów, obliczamy je dynamicznie, by zachować płynną prędkość.
-            // Definiujemy wagi dla długości każdego etapu (przybliżone).
-            double distRunway = (bottomY - (topY + curve)); // Długość prostej pasa
-            double distCurve1 = (Math.PI * curve / 2);      // Długość łuku
-            double distTaxi = Math.abs(termBaseX - (leftX + curve)); // Długość do przejechania po prostej
-            double distTerminal = Math.hypot(termTipX - termBaseX, termTipY - termBaseY); // Wjazd na stanowisko
+            double distRunway = (bottomY - (topY + curve));
+            double distCurve1 = (Math.PI * curve / 2);
+            double distTaxi = Math.abs(termBaseX - (leftX + curve));
+            double distTerminal = 2.0 * Math.hypot(termTipX - termBaseX, termTipY - termBaseY);
 
             double totalDist = distRunway + distCurve1 + distTaxi + distTerminal;
 
-            // Proporcje czasu względem przebytej drogi
             double p1 = distRunway / totalDist;
             double p2 = p1 + (distCurve1 / totalDist);
             double p3 = p2 + (distTaxi / totalDist);
-            // p4 = 1.0
 
             if (progress < p1) {
-                // Faza 1: Wjazd lewym pasem
                 double t = progress / p1;
                 targetX = leftX;
                 targetY = bottomY + t * ((topY + curve) - bottomY);
                 angle = -90;
             } else if (progress < p2) {
-                // Faza 2: Skręt w prawo na drogę kołowania
                 double t = (progress - p1) / (p2 - p1);
                 double p0x = leftX, p0y = topY + curve;
                 double p1x = leftX, p1y = topY;
@@ -193,27 +229,30 @@ public class AirportRenderer {
                 double dy = 2 * (1 - t) * (p1y - p0y) + 2 * t * (p2y - p1y);
                 angle = Math.toDegrees(Math.atan2(dy, dx));
             } else if (progress < p3) {
-                // Faza 3: Kołowanie do bazy terminala
                 double t = (progress - p2) / (p3 - p2);
                 targetX = (leftX + curve) + t * (termBaseX - (leftX + curve));
                 targetY = topY;
                 angle = 0;
             } else {
-                // Faza 4: Wjazd na pole terminala
                 double t = (progress - p3) / (1.0 - p3);
                 targetX = termBaseX + t * (termTipX - termBaseX);
                 targetY = termBaseY + t * (termTipY - termBaseY);
                 angle = Math.toDegrees(Math.atan2(termTipY - termBaseY, termTipX - termBaseX));
             }
+
+            double termAngle = Math.toDegrees(Math.atan2(termTipY - termBaseY, termTipX - termBaseX));
+            double blendRange = Math.min(0.04, Math.min(p3 - p2, 1.0 - p3) * 0.5);
+            if (blendRange > 0 && progress >= p3 - blendRange && progress <= p3 + blendRange) {
+                double tBlend = (progress - (p3 - blendRange)) / (2 * blendRange);
+                angle = interpolateAngle(0, termAngle, tBlend);
+            }
         } else {
-            // --- POSTÓJ I START ---
             if (progress == 0.0) {
                 targetX = termTipX;
                 targetY = termTipY;
                 angle = Math.toDegrees(Math.atan2(termTipY - termBaseY, termTipX - termBaseX));
             } else {
-                // Analogiczne wagi dla startu
-                double distTerminalOut = Math.hypot(termBaseX - termTipX, termBaseY - termTipY);
+                double distTerminalOut = 2.0 * Math.hypot(termBaseX - termTipX, termBaseY - termTipY);
                 double distTaxiOut = Math.abs((rightX - curve) - termBaseX);
                 double distCurve2 = (Math.PI * curve / 2);
                 double distRunwayOut = (bottomY - (topY + curve));
@@ -225,19 +264,16 @@ public class AirportRenderer {
                 double p3 = p2 + (distCurve2 / totalDistOut);
 
                 if (progress < p1) {
-                    // Faza 1: Wypychanie z terminala
                     double t = progress / p1;
                     targetX = termTipX + t * (termBaseX - termTipX);
                     targetY = termTipY + t * (termBaseY - termTipY);
                     angle = Math.toDegrees(Math.atan2(termTipY - termBaseY, termTipX - termBaseX));
                 } else if (progress < p2) {
-                    // Faza 2: Kołowanie do prawego zakrętu
                     double t = (progress - p1) / (p2 - p1);
                     targetX = termBaseX + t * ((rightX - curve) - termBaseX);
                     targetY = topY;
                     angle = 0;
                 } else if (progress < p3) {
-                    // Faza 3: Skręt prawym łukiem
                     double t = (progress - p2) / (p3 - p2);
                     double p0x = rightX - curve, p0y = topY;
                     double p1x = rightX, p1y = topY;
@@ -250,12 +286,28 @@ public class AirportRenderer {
                     double dy = 2 * (1 - t) * (p1y - p0y) + 2 * t * (p2y - p1y);
                     angle = Math.toDegrees(Math.atan2(dy, dx));
                 } else {
-                    // Faza 4: Rozbieg i start z pasa
                     double t = (progress - p3) / (1.0 - p3);
                     targetX = rightX;
                     targetY = (topY + curve) + t * (bottomY - (topY + curve));
                     angle = 90;
                 }
+
+                double termAngle = Math.toDegrees(Math.atan2(termTipY - termBaseY, termTipX - termBaseX));
+                double blendRange = Math.min(0.04, Math.min(p1, p2 - p1) * 0.5);
+                if (blendRange > 0 && progress >= p1 - blendRange && progress <= p1 + blendRange) {
+                    double tBlend = (progress - (p1 - blendRange)) / (2 * blendRange);
+                    angle = interpolateAngle(termAngle, 0, tBlend);
+                }
+            }
+        }
+
+        Image texToDraw = airplaneTexture;
+        if (airplane.line != null && airplane.line.color != null) {
+            model.Color mc = airplane.line.color;
+            texToDraw = tintedCache.get(mc);
+            if (texToDraw == null) {
+                texToDraw = createTintedImage(mc);
+                tintedCache.put(mc, texToDraw);
             }
         }
 
@@ -266,8 +318,15 @@ public class AirportRenderer {
         gc.rotate(angle);
 
         double planeSize = 3.5 * s;
-        gc.drawImage(airplaneTexture, -planeSize / 2, -planeSize / 2, planeSize, planeSize);
+        gc.drawImage(texToDraw, -planeSize / 2, -planeSize / 2, planeSize, planeSize);
         gc.restore();
+    }
+
+    private double interpolateAngle(double startAngle, double endAngle, double t) {
+        double difference = endAngle - startAngle;
+        while (difference < -180) difference += 360;
+        while (difference > 180) difference -= 360;
+        return startAngle + difference * t;
     }
 
     private void drawAirportDetails(Airport airport, float x, float y, float s) {
