@@ -23,7 +23,7 @@ public class GameData {
     private final AtomicInteger numberOfAvailableAirplanes;
     private final int limitOfLines = 7;
 
-    private static final int INITIAL_AVAILABLE_AIRPLANES = 3;
+    private static final int INITIAL_AVAILABLE_AIRPLANES = 4;
     private static final int INITIAL_UNLOCKED_LINE_COLORS = 3;
     private static final int MAX_LINES_BETWEEN_AIRPORTS = 3;
 

@@ -354,7 +354,7 @@ public class GamePresenter {
         }
         timeAfterLastRewardPopup.addTime(deltaTime);
 
-        if (timeAfterLastRewardPopup.getInGameHours() < 60) {
+        if (timeAfterLastRewardPopup.getInGameHours() < 48) {
             return;
         }
 
