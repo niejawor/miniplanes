@@ -20,6 +20,7 @@ public class GameRenderer {
     private final LineRenderer lineRenderer;
     private final UIRenderer uiRenderer = new UIRenderer();
     private final AirplaneRenderer airplaneRenderer;
+    private final AirplaneTextureManager textureManager;
 
     public GameRenderer(GamePresenter presenter, Canvas canvas, RouteBuilder routeBuilder, LineEditor lineEditor) {
         this.presenter = presenter;
@@ -31,8 +32,9 @@ public class GameRenderer {
         this.lineRenderer = new LineRenderer(presenter);
         this.backgroundTexture = new Image(new File("src/assets/mapa_chlodny_krem_2x_kontur.png").toURI().toString());
         this.airplaneTexture = new Image(new File("src/assets/airplane2.png").toURI().toString());
-        this.airportRenderer = new AirportRenderer(presenter, shapePainter, airplaneTexture);
-        this.airplaneRenderer = new AirplaneRenderer(presenter, airplaneTexture, shapePainter);
+        this.textureManager = new AirplaneTextureManager(airplaneTexture);
+        this.airportRenderer = new AirportRenderer(presenter, shapePainter, textureManager);
+        this.airplaneRenderer = new AirplaneRenderer(presenter, textureManager, shapePainter);
     }
 
     public void render(double zoom, double panX, double panY) {

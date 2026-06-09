@@ -16,43 +16,15 @@ import java.util.List;
 import java.util.Map;
 
 public class AirplaneRenderer {
-    private final Image airplaneTexture;
+    private final AirplaneTextureManager textureManager;
     private final GamePresenter presenter;
     private final ShapePainter shapePainter;
     private final Map<model.Color, Image> tintedCache = new HashMap<>();
 
-    public AirplaneRenderer(GamePresenter presenter, Image airplaneTexture, ShapePainter shapePainter) {
-        this.airplaneTexture = airplaneTexture;
+    public AirplaneRenderer(GamePresenter presenter, AirplaneTextureManager textureManager, ShapePainter shapePainter) {
+        this.textureManager = textureManager;
         this.presenter = presenter;
         this.shapePainter = shapePainter;
-    }
-
-    private Image createTintedImage(model.Color mc) {
-        PixelReader pr = airplaneTexture.getPixelReader();
-        int iw = (int) airplaneTexture.getWidth();
-        int ih = (int) airplaneTexture.getHeight();
-        WritableImage out = new WritableImage(iw, ih);
-        PixelWriter pw = out.getPixelWriter();
-
-        Color tint = ColorMapper.mapModelColor(mc);
-        double blend = 0.6;
-
-        for (int y = 0; y < ih; y++) {
-            for (int x = 0; x < iw; x++) {
-                Color oc = pr.getColor(x, y);
-                double a = oc.getOpacity();
-                if (a == 0) {
-                    pw.setColor(x, y, new Color(0,0,0,0));
-                } else {
-                    double r = oc.getRed() * (1 - blend) + tint.getRed() * blend;
-                    double g = oc.getGreen() * (1 - blend) + tint.getGreen() * blend;
-                    double b = oc.getBlue() * (1 - blend) + tint.getBlue() * blend;
-                    pw.setColor(x, y, new Color(clamp(r), clamp(g), clamp(b), a));
-                }
-            }
-        }
-
-        return out;
     }
 
     private double clamp(double v) {
@@ -65,9 +37,7 @@ public class AirplaneRenderer {
         List<Airplane> airplanes = presenter.getAirplanes();
         double screenAspect = w / h;
 
-        double texWidth = airplaneTexture.getWidth();
-        double texHeight = airplaneTexture.getHeight();
-        double textureAspect = texWidth / texHeight;
+        double textureAspect = textureManager.getTextureAspect();
 
         for (Airplane plane : airplanes) {
             if (!plane.isCurrentlyFlying() && zoom >= 15.0) continue;
@@ -97,16 +67,11 @@ public class AirplaneRenderer {
             double drawWidth = planeWidth * w;
             double drawHeight = planeHeight * w;
 
-            // choose tinted texture if line color available (cached)
-            Image texToDraw = airplaneTexture;
-            if (plane.line != null && plane.line.color != null) {
-                model.Color mc = plane.line.color;
-                texToDraw = tintedCache.get(mc);
-                if (texToDraw == null) {
-                    texToDraw = createTintedImage(mc);
-                    tintedCache.put(mc, texToDraw);
-                }
-            }
+            model.Color mc = (plane.line != null) ? plane.line.color : null;
+            Image texToDraw = textureManager.getTexture(mc);
+
+            gc.drawImage(texToDraw, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+            gc.restore();
 
             gc.drawImage(texToDraw, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
             gc.restore();

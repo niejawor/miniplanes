@@ -124,8 +124,6 @@ public class Airplane {
 
         float moveDist = type.speed * deltaTime;
 
-        //System.out.println("moveDist: " + moveDist);
-
         if (distance <= moveDist) {
             position = targetPos;
             currentAirport = target;
