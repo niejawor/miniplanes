@@ -2,7 +2,7 @@ package model;
 
 public enum AirportType {
     BigAirport(5,4, 2, 1, 3, 25f, 25f),
-    SmallAirport(5,2, 1, 1,  2,60f, 60f);
+    SmallAirport(5,2, 1, 1,  2,30f, 30f);
 
     public final int capacity;
     public final int takeoffRunways;
