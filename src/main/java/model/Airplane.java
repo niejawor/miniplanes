@@ -72,7 +72,7 @@ public class Airplane {
         final IntBox nPassengers = new IntBox();
 
         passengersOnBoard.removeIf(passenger -> {
-            data.stats.compute(new Pair<>(getOrigin().index, getDestination().getIndex()),
+            data.stats.compute(new Pair<>(getOrigin().index, getDestination().index),
                     (k, stat) ->
                             new Pair<>((stat != null ? stat.getKey() : 0L) + updater.currentTime.getCurrentTime() - passenger.lastLandingTime.getCurrentTime(),
                                     (stat != null ? stat.getValue() : 0) + 1));
@@ -87,11 +87,12 @@ public class Airplane {
                     passenger.setCurrentAirport(airport);
                     airport.addPassenger(passenger);
                 }
-
+                line.incrementTransportedPassengers();
                 return true;
             } else if (!passenger.wantsToBoard(this)) {
                 passenger.setCurrentAirport(airport);
                 airport.addPassenger(passenger);
+                line.incrementTransportedPassengers();
                 return true;
             }
             return false;

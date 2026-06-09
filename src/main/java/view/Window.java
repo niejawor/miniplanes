@@ -26,6 +26,7 @@ public class Window extends Pane {
     private MainMenuOverlay mainMenuOverlay;
     private PauseOverlay pauseOverlay;
     private GameOverOverlay gameOverOverlay;
+    private StatsOverlay statsOverlay;
 
     private model.Color selectedColor;
     private boolean addAirplaneMode = false;
@@ -210,6 +211,7 @@ public class Window extends Pane {
     public void clearMainMenuOverlay() { this.mainMenuOverlay = null; }
     public void clearPauseOverlay() { this.pauseOverlay = null; }
     public void clearGameOverOverlay() { this.gameOverOverlay = null; }
+    public void clearStatsOverlay() { this.statsOverlay = null; }
 
     public void showMainMenuOverlay() {
         if (mainMenuOverlay != null) return;
@@ -232,6 +234,13 @@ public class Window extends Pane {
 
         gameOverOverlay = new GameOverOverlay(this, presenter);
         getChildren().add(gameOverOverlay);
+    }
+
+    public void showStatsOverlay() {
+        if (statsOverlay != null) return;
+
+        statsOverlay = new StatsOverlay(this, presenter.getGameStatsSnapshot());
+        getChildren().add(statsOverlay);
     }
 
     public void showRewardPopup(model.Color nextColor) {
@@ -584,6 +593,10 @@ public class Window extends Pane {
         }
         closeAddAirplaneColorPopup();
         closeRewardPopup();
+        if (statsOverlay != null) {
+            getChildren().remove(statsOverlay);
+            statsOverlay = null;
+        }
         requestFocus();
     }
 }

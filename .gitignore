@@ -28,3 +28,5 @@ target/
 
 *.xml
 .idea
+
+mvn*

@@ -241,6 +241,63 @@ public class GamePresenter {
         return score;
     }
 
+    public GameStatsSnapshot getGameStatsSnapshot() {
+        int waitingPassengers = 0;
+        int overcrowdedAirports = 0;
+        for (Airport airport : gameData.getAirports()) {
+            waitingPassengers += airport.getPassengers().size();
+            if (airport.isOverCrowded()) {
+                overcrowdedAirports++;
+            }
+        }
+
+        int onboardPassengers = 0;
+        for (Airplane airplane : gameData.getAirplanes()) {
+            onboardPassengers += airplane.getPassengersOnBoard().size();
+        }
+
+        List<LineStatsSnapshot> lineStats = new ArrayList<>();
+        for (Line line : gameData.getLines()) {
+            int airplanesOnLine = 0;
+            for (Airplane airplane : gameData.getAirplanes()) {
+                if (airplane.line == line) {
+                    airplanesOnLine++;
+                }
+            }
+
+            lineStats.add(new LineStatsSnapshot(
+                    line.color,
+                    line.size(),
+                    airplanesOnLine,
+                    line.getTransportedPassengers()
+            ));
+        }
+
+        long totalTravelTime = 0;
+        long travelSamples = 0;
+        for (Pair<Integer, Integer> stat : gameData.getStats().values()) {
+            totalTravelTime += stat.getKey();
+            travelSamples += stat.getValue();
+        }
+        double averageTravelTimeSeconds = travelSamples == 0
+                ? 0.0
+                : (totalTravelTime / (double) travelSamples) / 1_000_000_000.0;
+
+        return new GameStatsSnapshot(
+                score,
+                getMinutes(),
+                gameData.getAirports().size(),
+                gameData.getLines().size(),
+                gameData.getAirplanes().size(),
+                gameData.getNumberOfAvailableAirplanes(),
+                waitingPassengers,
+                onboardPassengers,
+                overcrowdedAirports,
+                averageTravelTimeSeconds,
+                List.copyOf(lineStats)
+        );
+    }
+
     public int getMaxOvercrowdedTime() {
         return gameData.getMaxOvercrowdedTime();
     }
