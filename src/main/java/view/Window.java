@@ -70,7 +70,7 @@ public class Window extends Pane {
                 }
             }
 
-            
+
         });
         navbar.prefWidthProperty().bind(this.widthProperty().multiply(0.5));
 
@@ -84,7 +84,7 @@ public class Window extends Pane {
         setFocusTraversable(true);
 
         setOnMousePressed(e -> {
-            if (mainMenuOverlay != null || pauseOverlay != null || gameOverOverlay != null) return;
+            if (mainMenuOverlay != null || pauseOverlay != null || gameOverOverlay != null || rewardOverlay != null) return;
 
             double mouseX = e.getX();
             double mouseY = e.getY();
@@ -173,7 +173,7 @@ public class Window extends Pane {
         });
 
         setOnKeyPressed(e -> {
-            if (mainMenuOverlay != null || pauseOverlay != null || gameOverOverlay != null) return;
+            if (mainMenuOverlay != null || pauseOverlay != null || gameOverOverlay != null || rewardOverlay != null) return;
             if (e.isControlDown() || e.isShortcutDown()) {
                 if (e.getCode() == KeyCode.PLUS || e.getCode() == KeyCode.EQUALS) {
                     applyZoom(1.1, canvas.getWidth() / 2, canvas.getHeight() / 2);
@@ -222,7 +222,7 @@ public class Window extends Pane {
     }
 
     public void showPauseOverlay() {
-        if (pauseOverlay != null || presenter.isGameOver() || mainMenuOverlay != null) return;
+        if (pauseOverlay != null || presenter.isGameOver() || mainMenuOverlay != null || rewardOverlay != null) return;
         presenter.pauseGame();
 
         pauseOverlay = new PauseOverlay(this, presenter);
@@ -232,6 +232,7 @@ public class Window extends Pane {
     public void showGameOverOverlay() {
         if (gameOverOverlay != null) return;
 
+        closeRewardPopup();
         gameOverOverlay = new GameOverOverlay(this, presenter);
         getChildren().add(gameOverOverlay);
     }
@@ -243,9 +244,8 @@ public class Window extends Pane {
         getChildren().add(statsOverlay);
     }
 
-    public void showRewardPopup(model.Color nextColor) {
-        if (rewardOverlay != null) return;
-        // ensure game is paused when reward popup is shown
+    public boolean showRewardPopup(model.Color nextColor) {
+        if (rewardOverlay != null) return false;
         presenter.pauseGame();
         rewardOverlay = new StackPane();
         rewardOverlay.prefWidthProperty().bind(widthProperty());
@@ -303,6 +303,7 @@ public class Window extends Pane {
         panel.getChildren().addAll(title, text, buttons);
         rewardOverlay.getChildren().add(panel);
         getChildren().add(rewardOverlay);
+        return true;
     }
 
     public void showAddAirplaneColorPopup() {
@@ -409,6 +410,7 @@ public class Window extends Pane {
         if (rewardOverlay == null) return;
         getChildren().remove(rewardOverlay);
         rewardOverlay = null;
+        presenter.clearRewardPopupState();
         requestFocus();
     }
 

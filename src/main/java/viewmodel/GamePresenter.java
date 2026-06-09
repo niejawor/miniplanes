@@ -26,7 +26,7 @@ public class GamePresenter {
     int score = 0;
 
     Time time = new Time(0);
-    private final Time timeAfterLastRewardPopup = new Time(0);
+    private Time timeAfterLastRewardPopup = new Time(0);
     private boolean rewardPopupOpen = false;
 
     private Time lastPathsUpdate = new Time(0);
@@ -105,7 +105,7 @@ public class GamePresenter {
     public void restartGame() {
         this.score = 0;
         this.time = new Time(0);
-        this.timeAfterLastRewardPopup.setCurrentTime(0);
+        this.timeAfterLastRewardPopup = new Time(0);
         this.gameOver = false;
         this.paused = false;
         this.rewardPopupOpen = false;
@@ -340,6 +340,14 @@ public class GamePresenter {
         resumeGame();
     }
 
+    public void clearRewardPopupState() {
+        rewardPopupOpen = false;
+    }
+
+    public boolean isRewardPopupOpen() {
+        return rewardPopupOpen;
+    }
+
     private void maybeShowRewardPopup(long now, long deltaTime) {
         if (rewardPopupOpen || window == null) {
             return;
@@ -348,11 +356,14 @@ public class GamePresenter {
 
         if (timeAfterLastRewardPopup.getInGameHours() < 60) {
             return;
-        } // zmienic co np 4 dni // chyba pomija czas jak jest pazua w senise tez go liczy - do poprawy - naprawione 
+        }
 
         timeAfterLastRewardPopup.setCurrentTime(0);
-        rewardPopupOpen = true;
         pauseGame();
-        window.showRewardPopup(gameData.getNextLockedLineColor());
+        if (window.showRewardPopup(gameData.getNextLockedLineColor())) {
+            rewardPopupOpen = true;
+        } else {
+            resumeGame();
+        }
     }
 }
