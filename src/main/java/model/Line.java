@@ -4,6 +4,7 @@ import java.util.*;
 public final class Line {
     private final LinkedList<Airport> path = new LinkedList<>();
     public final Color color;
+    int transportedPassengers = 0;
 
     public Line(Airport a, Airport b, Color color){
         this.color = color;
@@ -36,6 +37,14 @@ public final class Line {
 
     public boolean contains(Airport airport) {
         return indexOf(airport) >= 0;
+    }
+
+    public int getTransportedPassengers() {
+        return transportedPassengers;
+    }
+
+    void incrementTransportedPassengers() {
+        transportedPassengers++;
     }
 
     public boolean addAirportBetween(Airport a, Airport b, Airport nowy) {

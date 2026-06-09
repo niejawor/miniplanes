@@ -52,6 +52,10 @@ public class PauseOverlay extends StackPane {
             window.requestFocus();
         });
 
+        Button statsButton = new Button("Statystyki");
+        statsButton.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-background-radius: 5;");
+        statsButton.setOnAction(e -> window.showStatsOverlay());
+
         Button startOverButton = new Button("Start Over");
         startOverButton.setStyle("-fx-background-color: #e67e22; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-background-radius: 5;");
         startOverButton.setOnAction(e -> {
@@ -60,7 +64,7 @@ public class PauseOverlay extends StackPane {
             presenter.restartGame();
         });
 
-        buttons.getChildren().addAll(resumeButton, startOverButton);
+        buttons.getChildren().addAll(resumeButton, statsButton, startOverButton);
         panel.getChildren().addAll(title, resultLabel, timeLabel, buttons);
         this.getChildren().add(panel);
     }
