@@ -11,7 +11,7 @@ public class Updater {
 
     GameData data;
 
-    private Time currentTime = new Time(0);
+    final Time currentTime = new Time(0);
 
     private final long weekTime = 7;
 
@@ -21,7 +21,7 @@ public class Updater {
     }
 
     void generatePassenger(Airport airport) {
-        airport.addPassenger(new Passenger(data.getShapeHandler().getRandomUsed(),airport,data));
+        airport.addPassenger(new Passenger(data.getShapeHandler().getRandomUsed(),airport,data, currentTime.getCurrentTime()));
     }
 
     List<Airplane> getAirplanes() {
@@ -84,7 +84,7 @@ public class Updater {
 
         int temp = data.getTotalTransportedPassengers();
         for(Airport a: data.getAirports()){
-            data.addTotalTransportedPassengers(a.update(deltaTime, data.getStats()));
+            data.addTotalTransportedPassengers(a.update(deltaTime, this, data));
         }
 
         boolean gameOver = false;

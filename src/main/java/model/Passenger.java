@@ -7,11 +7,13 @@ public class Passenger {
     Airport currentAirport;
     List<Integer> targetAirports;
     GameData gameData;
+    Time lastLandingTime;
 
-    public Passenger(Shape destination,  Airport currentAirport, GameData gameData) {
+    public Passenger(Shape destination,  Airport currentAirport, GameData gameData, long currentTime) {
         this.destination = destination;
         this.currentAirport = currentAirport;
         this.gameData = gameData;
+        lastLandingTime = new Time(currentTime);
     }
 
     public Shape getDestination() {

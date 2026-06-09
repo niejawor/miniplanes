@@ -68,15 +68,17 @@ public class Airplane {
             val++;
         }
     };
-    public int unloadPassengers(Airport airport, HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> stats) {
+    public int unloadPassengers(Airport airport, Updater updater, GameData data) {
         final IntBox nPassengers = new IntBox();
-        final int pass = passengersOnBoard.size();
-
-        stats.compute(new Pair<>(getOrigin().index, getDestination().getIndex()),
-                (k, stat) ->
-                        new Pair<>((int)((stat != null ? stat.getKey() : 0) + pass*timeSpent.getCurrentTime()), (stat != null ? stat.getValue() : 0) + pass));
 
         passengersOnBoard.removeIf(passenger -> {
+            data.stats.compute(new Pair<>(getOrigin().index, getDestination().getIndex()),
+                    (k, stat) ->
+                            new Pair<>((int)((stat != null ? stat.getKey() : 0) +  updater.currentTime.getCurrentTime() - passenger.lastLandingTime.getCurrentTime()),
+                                    (stat != null ? stat.getValue() : 0) + 1));
+
+            passenger.lastLandingTime.setCurrentTime(updater.currentTime.getCurrentTime());
+
             if (passenger.getTargetAirports().contains(airport.getIndex())) {
                 if(passenger.getDestination() == airport.getShape()){
                     nPassengers.inc();

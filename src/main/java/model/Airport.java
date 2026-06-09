@@ -144,13 +144,13 @@ public class Airport {
         return AirportCrowdingLevel.OVERCROWDED_STARTED;
     }
 
-    private int processParkedAirplanes(HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> stats) {
+    private int processParkedAirplanes(Updater updater, GameData data) {
         int x = 0;
         for (AirplaneEntry entry : parkedAirplanes) {
             Airplane a = entry.airplane;
 
             if (!a.hasUnloaded() && a.getTimeSpent().getCurrentTime() >= 1.0f) {
-                x += a.unloadPassengers(this, stats);
+                x += a.unloadPassengers(this, updater, data);
                 a.setUnloaded(true);
             }
 
@@ -178,11 +178,11 @@ public class Airport {
         }
     }
 
-    public int update(long deltaTime, HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> stats) {
+    public int update(long deltaTime, Updater updater, GameData data) {
         finishTakeOffs();
         finishLandings();
 
-        int x = processParkedAirplanes(stats);
+        int x = processParkedAirplanes(updater, data);
 
         processNewTakeOffs();
         processNewLandings();
