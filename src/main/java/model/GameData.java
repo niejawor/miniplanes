@@ -36,8 +36,8 @@ public class GameData {
 
     int maxOvercrowdedTime = 2; //in days
 
-    // klucz: krawedz z lotniska first do second, wartosc: first - suma czasow, sec - liczba pobranych danych zainicjalizowalbym na czas przelotu dystansu wprost
-    HashMap<Pair<Integer, Integer>, Pair<Integer,Integer>> stats = new HashMap<>();
+    // klucz: krawedz z lotniska first do second, wartosc: first - suma czasow (long), sec - liczba pobranych danych
+    HashMap<Pair<Integer, Integer>, Pair<Long, Integer>> stats = new HashMap<>();
 
     private HashMap<Integer, List<List<Integer>>> bestNextStop = new HashMap<>();
 
@@ -64,7 +64,7 @@ public class GameData {
         return airports;
     }
 
-    public HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> getStats() {
+    public HashMap<Pair<Integer, Integer>, Pair<Long, Integer>> getStats() {
         return stats;
     }
 
