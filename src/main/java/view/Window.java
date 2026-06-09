@@ -16,7 +16,7 @@ import viewmodel.GamePresenter;
 public class Window extends Pane {
     private final GamePresenter presenter;
     private final Canvas canvas;
-    private final GameRenderer renderer;
+    private GameRenderer renderer;
     private final RouteBuilder routeBuilder;
     private final LineEditor lineEditor;
     private final Navbar navbar;
@@ -572,18 +572,45 @@ public class Window extends Pane {
 
     /** Reset window-local state after a game restart. */
     public void resetAfterRestart() {
+        this.zoom = 1.0;
+        this.panX = 0.0;
+        this.panY = 0.0;
+
+        this.renderer = new GameRenderer(presenter, canvas, routeBuilder, lineEditor);
+
         routeBuilder.clear();
         try {
             if (lineEditor.isEditing()) lineEditor.cancel(presenter);
         } catch (Exception ignored) {}
+
         addAirplaneMode = false;
         selectedLineForAirplane = -1;
+
+        if (presenter.getPalette() != null && !presenter.getPalette().isEmpty()) {
+            this.selectedColor = presenter.getPalette().get(0);
+        }
+
         if (navbar != null) {
             navbar.setAddAirplaneActive(false);
             navbar.setAirplaneLineSelected(false);
         }
+
         closeAddAirplaneColorPopup();
         closeRewardPopup();
+
+        if (mainMenuOverlay != null) {
+            getChildren().remove(mainMenuOverlay);
+            mainMenuOverlay = null;
+        }
+        if (pauseOverlay != null) {
+            getChildren().remove(pauseOverlay);
+            pauseOverlay = null;
+        }
+        if (gameOverOverlay != null) {
+            getChildren().remove(gameOverOverlay);
+            gameOverOverlay = null;
+        }
+
         requestFocus();
     }
 }

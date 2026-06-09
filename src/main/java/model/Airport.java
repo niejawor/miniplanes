@@ -28,6 +28,10 @@ public class Airport {
 
     static int nextIndex = 0;
 
+    public static void resetIndexCounter() {
+        nextIndex = 0;
+    }
+
     private final Updater updater;
 
     private final List<Passenger> passengers = new CopyOnWriteArrayList<>();

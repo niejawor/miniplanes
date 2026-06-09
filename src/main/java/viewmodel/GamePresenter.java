@@ -29,6 +29,8 @@ public class GamePresenter {
     private final Time timeAfterLastRewardPopup = new Time(0);
     private boolean rewardPopupOpen = false;
 
+    private Time lastPathsUpdate = new Time(0);
+
     private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor(runnable -> {
         Thread thread = new Thread(runnable);
         thread.setDaemon(true);
@@ -55,7 +57,6 @@ public class GamePresenter {
     public void setupGameLoop(){
         AnimationTimer animationTimer = new AnimationTimer() {
             long lastTime = System.nanoTime();
-            Time lastPathsUpdate = new Time(0);
 
             @Override
             public void handle(long now) {
@@ -97,55 +98,73 @@ public class GamePresenter {
         animationTimer.start();
     }
 
-    public void restartGame() {
-        this.score = 0;
-        this.time = new Time(0);
-        this.gameOver = false;
-        this.paused = false;
-        this.rewardPopupOpen = false;
-        this.gameData = new GameData();
-        this.updater = new Updater(gameData);
-        this.gameData.setUpdater(updater);
-    }
-
     public boolean isGameOver() {
         return gameOver;
     }
 
-    public void triggerPathRefresh(){
+    public void restartGame() {
+        this.score = 0;
+        this.time = new Time(0);
+        this.timeAfterLastRewardPopup.setCurrentTime(0);
+        this.gameOver = false;
+        this.paused = false;
+        this.rewardPopupOpen = false;
+        this.dijkstraRunning = false;
+
+        this.eventsQueue.clear();
+
+        this.lastPathsUpdate = new Time(0);
+
+        Airport.resetIndexCounter();
+
+        this.gameData = new GameData();
+        this.updater = new Updater(gameData);
+        this.gameData.setUpdater(updater);
+
+        if (this.window != null) {
+            this.window.resetAfterRestart();
+            this.window.refreshNavbar();
+        }
+
+        triggerPathRefresh();
+    }
+
+    public void triggerPathRefresh() {
         dijkstraRunning = true;
 
-        HashMap<Pair<Integer,Integer>,Pair<Long,Integer>> statsCopy = new HashMap<>(gameData.getStats());
+        final GameData capturedGameData = this.gameData;
+        final Updater capturedUpdater = this.updater;
+
+        HashMap<Pair<Integer,Integer>,Pair<Long,Integer>> statsCopy = new HashMap<>(capturedGameData.getStats());
         List<ArrayList<Integer>> copyLinePaths =  new ArrayList<>();
 
-        for(Line line: gameData.getLines()){
+        for(Line line: capturedGameData.getLines()){
             if(line.getPath().size()<2){
                 continue;
             }
-
             copyLinePaths.add(new ArrayList<>());
             for(Airport airport: line.getPath()){
                 copyLinePaths.getLast().add(airport.getIndex());
             }
-
         }
 
         List<Integer> airportsCopy = new ArrayList<>();
-        for (Airport airport: gameData.getAirports()){
+        for (Airport airport: capturedGameData.getAirports()){
             airportsCopy.add(airport.getIndex());
         }
 
         HashMap<Integer,Shape> airportShapes = new HashMap<>();
-        for (Airport airport: gameData.getAirports()){
+        for (Airport airport: capturedGameData.getAirports()){
             airportShapes.put(airport.getIndex(), airport.getShape());
         }
 
-
         backgroundExecutor.submit(() -> {
-            HashMap<Integer, List<List<Integer>>> result = updater.performPathFinder(statsCopy,copyLinePaths,airportsCopy,airportShapes);
+            HashMap<Integer, List<List<Integer>>> result = capturedUpdater.performPathFinder(statsCopy, copyLinePaths, airportsCopy, airportShapes);
 
-            Platform.runLater(()->{
-                gameData.setBestNextStop(result);
+            Platform.runLater(() -> {
+                if (this.gameData == capturedGameData) {
+                    capturedGameData.setBestNextStop(result);
+                }
                 dijkstraRunning = false;
             });
         });
@@ -197,7 +216,7 @@ public class GamePresenter {
     }
 
 
-    
+
     public void pauseGame() { //pauseSimulation
         paused = true;
     }
@@ -221,7 +240,7 @@ public class GamePresenter {
         if (newAirportId < 0 || newAirportId >= gameData.getAirports().size()) return false;
 
         eventsQueue.add(
-          new Event.EditLineAddToEdgeEvent(gameData, lineId, edgeAirportId, newAirportId)
+                new Event.EditLineAddToEdgeEvent(gameData, lineId, edgeAirportId, newAirportId)
         );
 
         return true;

@@ -44,8 +44,6 @@ public class GameOverOverlay extends StackPane {
             window.getChildren().remove(this);
             window.clearGameOverOverlay();
             presenter.restartGame();
-            window.refreshNavbar();
-            presenter.resumeGame();
             window.requestFocus();
         });
 

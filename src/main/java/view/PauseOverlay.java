@@ -58,8 +58,6 @@ public class PauseOverlay extends StackPane {
             window.getChildren().remove(this);
             window.clearPauseOverlay();
             presenter.restartGame();
-            window.resetAfterRestart();
-            window.refreshNavbar();
         });
 
         buttons.getChildren().addAll(resumeButton, startOverButton);
