@@ -103,7 +103,7 @@ public class Updater {
                 timeOfLastAirportAdded.setCurrentTime(currentTime.getCurrentTime());
             } catch (Exception e) {}
         }
-        else if(currentTime.getInGameHours() - timeOfLastAirportAdded.getInGameHours() > 8){
+        else if(currentTime.getInGameHours() - timeOfLastAirportAdded.getInGameHours() > 12){
             System.out.println("adding airport, time: " + currentTime.getInSeconds());
             try {
                 data.addAirport(getNextAirport());
