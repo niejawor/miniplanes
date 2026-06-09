@@ -233,14 +233,13 @@ public class Airport {
         queuedAirplanes.add(airplane);
     }
 
-    public void processNewLandings() {
+    private void processNewLandings() {
         while (canLand()) {
-            Airplane a = queuedAirplanes.get(0);
-            queuedAirplanes.remove(0);
-            landingAirplanes.add(new AirplaneEntry(a, currentlyFreeLandingRunway, (landingAirplanes.size() + currentlyFreeTerminal) % type.terminals));
-            currentlyFreeLandingRunway++;
-            currentlyFreeLandingRunway %= type.landingRunways;
-            a.startLandingProcedure();
+            Airplane airplane = queuedAirplanes.remove(0);
+            int terminalIndex = (landingAirplanes.size() + currentlyFreeTerminal) % type.terminals;
+            landingAirplanes.add(new AirplaneEntry(airplane, currentlyFreeLandingRunway, terminalIndex));
+            currentlyFreeLandingRunway = (currentlyFreeLandingRunway + 1) % type.landingRunways;
+            airplane.startLandingProcedure();
         }
     }
 
@@ -249,17 +248,23 @@ public class Airport {
         return startingAirplanes.size() < type.takeoffRunways;
     }
 
-    public void processNewTakeOffs() {
+    private void processNewTakeOffs() {
         while (canTakeOff()) {
-            Airplane a = parkedAirplanes.get(0).airplane;
-            if (!a.hasLoaded()) break;
-            a.setUnloaded(false);
-            a.setLoaded(false);
-            startingAirplanes.add(new AirplaneEntry(a, currentlyFreeStartingRunway, parkedAirplanes.get(0).terminalIndex));
+            AirplaneEntry currentEntry = parkedAirplanes.get(0);
+            Airplane airplane = currentEntry.airplane;
+
+            if (!airplane.hasLoaded()) {
+                break;
+            }
+
+            airplane.setUnloaded(false);
+            airplane.setLoaded(false);
+
+            startingAirplanes.add(new AirplaneEntry(airplane, currentlyFreeStartingRunway, currentEntry.terminalIndex));
             parkedAirplanes.remove(0);
-            currentlyFreeStartingRunway++;
-            currentlyFreeStartingRunway %= type.takeoffRunways;
-            a.startTakeOffProcedure();
+            currentlyFreeStartingRunway = (currentlyFreeStartingRunway + 1) % type.takeoffRunways;
+
+            airplane.startTakeOffProcedure();
         }
     }
 
