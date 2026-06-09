@@ -275,7 +275,7 @@ public class GamePresenter {
 
         long totalTravelTime = 0;
         long travelSamples = 0;
-        for (Pair<Integer, Integer> stat : gameData.getStats().values()) {
+        for (Pair<Long, Integer> stat : gameData.getStats().values()) {
             totalTravelTime += stat.getKey();
             travelSamples += stat.getValue();
         }

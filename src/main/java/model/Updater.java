@@ -155,7 +155,7 @@ public class Updater {
 
 
         // Dodaj jedna krawedz na polaczenie: statystyczna jesli sa dane, domyslna w przeciwnym razie
-        float defaultEdgeWeight = 10_000f;
+        float defaultEdgeWeight = 5.0f;
         for(Pair<Integer, Integer> lineEdge : isInLines.keySet()){
             Integer from = lineEdge.getKey();
             if(!graph.containsKey(from)) continue;
@@ -163,7 +163,7 @@ public class Updater {
             Pair<Long, Integer> stat = stats.get(lineEdge);
             float weight;
             if(stat != null && stat.getValue() > 0){
-                weight = (float)stat.getKey() / (float)stat.getValue();
+                weight = ((float)stat.getKey() / (float)stat.getValue()) / 1_000_000_000f;
             } else {
                 weight = defaultEdgeWeight;
             }
