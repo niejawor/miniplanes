@@ -66,7 +66,7 @@ public class AirportSupplier implements Supplier<Airport> {
                 currentMinDist = newDist;
             }
 
-            double weight = 1/(currentMinDist * currentMinDist * currentMinDist);
+            double weight = Math.pow(1/currentMinDist, 3d * Math.sqrt(6/(double)used.size()));
             weightedAirports.add(new Pair<>(airport, weight));
             totalWeight += weight;
         }
