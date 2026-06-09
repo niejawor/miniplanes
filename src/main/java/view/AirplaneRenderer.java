@@ -71,7 +71,7 @@ public class AirplaneRenderer {
             Image texToDraw = textureManager.getTexture(mc);
 
             gc.drawImage(texToDraw, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
-            gc.restore(); // Prawidłowe, pojedyncze przywrócenie stanu kontekstu
+            gc.restore();
 
             if (zoom >= 8.0) {
                 List<Passenger> passengers = plane.getPassengersOnBoard();
