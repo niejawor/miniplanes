@@ -74,7 +74,7 @@ public class Airplane {
         passengersOnBoard.removeIf(passenger -> {
             data.stats.compute(new Pair<>(getOrigin().index, getDestination().getIndex()),
                     (k, stat) ->
-                            new Pair<>((int)((stat != null ? stat.getKey() : 0) +  updater.currentTime.getCurrentTime() - passenger.lastLandingTime.getCurrentTime()),
+                            new Pair<>((stat != null ? stat.getKey() : 0L) + updater.currentTime.getCurrentTime() - passenger.lastLandingTime.getCurrentTime(),
                                     (stat != null ? stat.getValue() : 0) + 1));
 
             passenger.lastLandingTime.setCurrentTime(updater.currentTime.getCurrentTime());

@@ -118,7 +118,7 @@ public class Updater {
 
 
 
-    public HashMap<Integer, List<List<Integer>>> performPathFinder(HashMap<Pair<Integer, Integer>, Pair<Integer, Integer>> stats, List<ArrayList<Integer>> lines, List<Integer> airports, HashMap<Integer, Shape> airportShapes){
+    public HashMap<Integer, List<List<Integer>>> performPathFinder(HashMap<Pair<Integer, Integer>, Pair<Long, Integer>> stats, List<ArrayList<Integer>> lines, List<Integer> airports, HashMap<Integer, Shape> airportShapes){
         HashMap<Integer, List<Pair<Integer, Float>>> graph = new HashMap<>(); // airport -> index
         HashMap<Integer, List<List<Integer>>> result = new HashMap<>();
 
@@ -154,28 +154,20 @@ public class Updater {
         }
 
 
-        // Dodaj krawedzie domyslne dla wszystkich polaczen linii - pozwala na trasowanie przez nowe linie bez statystyk
-        float defaultEdgeWeight = 1_000_000f;
+        // Dodaj jedna krawedz na polaczenie: statystyczna jesli sa dane, domyslna w przeciwnym razie
+        float defaultEdgeWeight = 10_000f;
         for(Pair<Integer, Integer> lineEdge : isInLines.keySet()){
             Integer from = lineEdge.getKey();
-            if(graph.containsKey(from)){
-                graph.get(from).add(new Pair<>(lineEdge.getValue(), defaultEdgeWeight));
-            }
-        }
+            if(!graph.containsKey(from)) continue;
 
-        // Nadpisz krawedzie statystyczne (nizsza waga = lepsza trasa) gdy sa dostepne dane
-        for(Map.Entry<Pair<Integer, Integer>, Pair<Integer, Integer>> info : stats.entrySet()){
-            if(!isInLines.containsKey(info.getKey())){
-                continue;
+            Pair<Long, Integer> stat = stats.get(lineEdge);
+            float weight;
+            if(stat != null && stat.getValue() > 0){
+                weight = (float)stat.getKey() / (float)stat.getValue();
+            } else {
+                weight = defaultEdgeWeight;
             }
-
-            int count = info.getValue().getValue();
-            if(count == 0) {
-                continue;
-            }
-            graph.get(info.getKey().getKey()).add(new Pair<>(
-                    info.getKey().getValue(), (float)info.getValue().getKey()/(float)count
-            ));
+            graph.get(from).add(new Pair<>(lineEdge.getValue(), weight));
         }
 
         for(Integer airport : airports){
@@ -265,7 +257,17 @@ public class Updater {
                 float entryDist = entry.getValue();
                 boolean withinThreshold = dist.get(min) * 2.5 >= entryDist;
                 boolean unreachable = entryDist >= 500_000_000_000f;
-                if(withinThreshold || unreachable){
+                if(withinThreshold && !unreachable){
+                    temp.add(entry.getKey());
+                    Integer firstHop = entry.getKey();
+                    while(!Objects.equals(prev.get(firstHop), start)){
+                        if(Objects.equals(firstHop, prev.get(firstHop))){
+                            break;
+                        }
+                        firstHop = prev.get(firstHop);
+                    }
+                    temp.add(firstHop);
+                } else if(unreachable){
                     temp.add(entry.getKey());
                 }
             }

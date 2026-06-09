@@ -115,7 +115,7 @@ public class GamePresenter {
     public void triggerPathRefresh(){
         dijkstraRunning = true;
 
-        HashMap<Pair<Integer,Integer>,Pair<Integer,Integer>> statsCopy = new HashMap<>(gameData.getStats());
+        HashMap<Pair<Integer,Integer>,Pair<Long,Integer>> statsCopy = new HashMap<>(gameData.getStats());
         List<ArrayList<Integer>> copyLinePaths =  new ArrayList<>();
 
         for(Line line: gameData.getLines()){
