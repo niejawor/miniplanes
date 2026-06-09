@@ -174,11 +174,35 @@ public interface Event {
 
         @Override
         public boolean handleEvent() {
-            if (!gameData.getLines().get(lineId).delAirport(gameData.getAirports().get(airportToRemove))) return false;
-            if (gameData.getLines().get(lineId).size() <= 1) {
+            Line line = gameData.getLines().get(lineId);
+            var airports = gameData.getAirports();
+            Airport toRemove = airports.get(airportToRemove);
+
+            int removedIndex = line.indexOf(toRemove);
+            if (removedIndex < 0) return false;
+
+            boolean result = line.delAirport(toRemove);
+            if (!result) return false;
+
+            // Po usunieciu lotniska z trasy trzeba skorygowac indeksy celow samolotow.
+            // Dla samolotow, ktorych idx byl wiekszy niz usuniety indeks, zmniejszamy idx o 1.
+            for (Airplane airplane : gameData.getAirplanes()) {
+                if (airplane.line == line) {
+                    if (airplane.idx > removedIndex) {
+                        airplane.idx--;
+                    } else if (airplane.idx >= line.size()) {
+                        // Gdy idx znajduje sie poza zakresem po usunieciu (np. usunieto ostatnie lotnisko),
+                        // przycinamy do ostatniego dostepnego indeksu.
+                        airplane.idx = Math.max(0, line.size() - 1);
+                    }
+                }
+            }
+
+            if (line.size() <= 1) {
                 Event event = new RemoveLineEvent(lineId, gameData);
                 event.handleEvent();
             }
+
             return true;
         }
     }
