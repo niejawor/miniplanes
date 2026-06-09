@@ -1,8 +1,8 @@
 package model;
 
 public enum AirportType {
-    BigAirport(5,4, 2, 1, 3, 5f, 5f),  //2 pasy startowe i jeden pas do lądowania oraz możliwość na 4 zaparkowane samoloty
-    SmallAirport(5,2, 1, 1,  2,3f, 3f); //1 pas startowy i jeden pas do lądowania oraz możliwość na 2 zaparkowane samoloty
+    BigAirport(5,4, 2, 1, 3, 25f, 25f),  //2 pasy startowe i jeden pas do lądowania oraz możliwość na 4 zaparkowane samoloty
+    SmallAirport(5,2, 1, 1,  2,20f, 20f); //1 pas startowy i jeden pas do lądowania oraz możliwość na 2 zaparkowane samoloty
 
     public final int capacity;
     public final int takeoffRunways;

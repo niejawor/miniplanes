@@ -47,7 +47,7 @@ public class Airport {
         this.position = position;
         this.type = type;
         this.updater = updater;
-        newPassengerThreshold.setInMinutes(300);
+        newPassengerThreshold.setInMinutes(420);
         index = nextIndex++;
     }
 
@@ -196,7 +196,7 @@ public class Airport {
         Iterator<AirplaneEntry> it = startingAirplanes.iterator();
         AirplaneEntry entry;
         while (it.hasNext()) {
-            if ((entry=it.next()).airplane.getTimeSpent().getCurrentTime() >= type.timeSpentTakingOff) {
+            if ((entry=it.next()).airplane.getTimeSpent().getInGameMinutes() >= type.timeSpentTakingOff) { // tutaj poprawka czasu
                 if (entry.airplane.isValid()) entry.airplane.startNextJourney();
                 else updater.getAirplanes().remove(entry.airplane);
                 startingAirplanes.remove(entry);
@@ -209,7 +209,7 @@ public class Airport {
         Iterator<AirplaneEntry> it = landingAirplanes.iterator();
         AirplaneEntry entry;
         while (it.hasNext()) {
-            if ((entry=it.next()).airplane.getTimeSpent().getCurrentTime() >= type.timeSpentLanding) {
+            if ((entry=it.next()).airplane.getTimeSpent().getInGameMinutes() >= type.timeSpentLanding) { // tutaj poprawka czasu
                 parkedAirplanes.add(new AirplaneEntry(entry.airplane, currentlyFreeTerminal, currentlyFreeTerminal));
                 currentlyFreeTerminal += 1;
                 currentlyFreeTerminal %= type.terminals;

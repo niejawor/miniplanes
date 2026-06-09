@@ -26,8 +26,7 @@ public class GamePresenter {
     int score = 0;
 
     Time time = new Time(0);
-    private static final long REWARD_POPUP_INTERVAL_NANOS = 30_000_000_000L;
-    private long lastRewardPopupTime = 0;
+    private final Time timeAfterLastRewardPopup = new Time(0);
     private boolean rewardPopupOpen = false;
 
     private final ExecutorService backgroundExecutor = Executors.newSingleThreadExecutor(runnable -> {
@@ -69,7 +68,7 @@ public class GamePresenter {
                     return;
                 }
 
-                maybeShowRewardPopup(now);
+                maybeShowRewardPopup(now, now - lastTime);
 
                 time.addTime(now - lastTime);
 
@@ -103,7 +102,6 @@ public class GamePresenter {
         this.time = new Time(0);
         this.gameOver = false;
         this.paused = false;
-        this.lastRewardPopupTime = 0;
         this.rewardPopupOpen = false;
         this.gameData = new GameData();
         this.updater = new Updater(gameData);
@@ -266,19 +264,17 @@ public class GamePresenter {
         resumeGame();
     }
 
-    private void maybeShowRewardPopup(long now) {
+    private void maybeShowRewardPopup(long now, long deltaTime) {
         if (rewardPopupOpen || window == null) {
             return;
         }
-        if (lastRewardPopupTime == 0) {
-            lastRewardPopupTime = now;
-            return;
-        }
-        if (now - lastRewardPopupTime < REWARD_POPUP_INTERVAL_NANOS) {
-            return;
-        } // zmienic co np 4 dni // chyba pomija czas jak jest pazua w senise tez go liczy - do poprawy 
+        timeAfterLastRewardPopup.addTime(deltaTime);
 
-        lastRewardPopupTime = now;
+        if (timeAfterLastRewardPopup.getInGameHours() < 60) {
+            return;
+        } // zmienic co np 4 dni // chyba pomija czas jak jest pazua w senise tez go liczy - do poprawy - naprawione 
+
+        timeAfterLastRewardPopup.setCurrentTime(0);
         rewardPopupOpen = true;
         pauseGame();
         window.showRewardPopup(gameData.getNextLockedLineColor());

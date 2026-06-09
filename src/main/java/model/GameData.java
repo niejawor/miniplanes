@@ -12,9 +12,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 public class GameData {
-    private final List<Airport> airports = new CopyOnWriteArrayList<>();
-    private final List<Airplane> airplanes = new CopyOnWriteArrayList<>();
-    private final List<Line> lines = new CopyOnWriteArrayList<>();
+    private final List<Airport> airports = new ArrayList<>();
+    private final List<Airplane> airplanes = new ArrayList<>();
+    private final List<Line> lines = new ArrayList<>();
     private Supplier<Airport> airportSupplier;// = new AirportSupplier(AirportListGenerator.generateAirports(this), null);
     private final EnumIterator<Shape> shapeHandler = new EnumIterator<>(Shape.class);
     Updater updater;
@@ -23,7 +23,7 @@ public class GameData {
     private final AtomicInteger numberOfAvailableAirplanes;
     private final int limitOfLines = 7;
 
-    private static final int INITIAL_AVAILABLE_AIRPLANES = 5;
+    private static final int INITIAL_AVAILABLE_AIRPLANES = 3;
     private static final int INITIAL_UNLOCKED_LINE_COLORS = 3;
     private static final int MAX_LINES_BETWEEN_AIRPORTS = 3;
 
